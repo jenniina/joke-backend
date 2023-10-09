@@ -10,7 +10,8 @@
     },
     "include": [
         "src/**/*",
-        "tsconfig.json"
+        "tsconfig.json",
+        "src/updateUser.js"
     ],
     "exclude": [
         "src/types/*.ts",

@@ -29,5 +29,17 @@ const userSchema = new mongoose_1.Schema({
         required: true,
         default: false,
     },
+    role: {
+        type: Number,
+        required: true,
+        default: 1,
+        max: 3,
+        min: 1,
+    },
+    token: {
+        type: String,
+        required: false,
+        default: '',
+    },
 }, { timestamps: true });
 exports.User = (0, mongoose_1.model)('User', userSchema);

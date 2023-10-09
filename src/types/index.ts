@@ -6,6 +6,7 @@ export interface IUser extends Document {
   password: string
   language: ELanguages
   verified?: boolean
+  token?: string
   createdAt?: string
   updatedAt?: string
 }

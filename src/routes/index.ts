@@ -16,9 +16,6 @@ import {
   changePasswordToken,
   verifyEmail,
   verifyEmailToken,
-  forgotEmail,
-  resetEmail,
-  resetEmailToken,
   changeEmail,
   changeEmailToken,
   verifyUsername,
@@ -32,6 +29,9 @@ import {
   generateToken,
   verifyTokenMiddleware,
   findUserByUsername,
+  checkIfAdmin,
+  authenticateUser,
+  verificationSuccess,
 } from '../controllers/users'
 import {
   getJokes,
@@ -49,16 +49,17 @@ import {
 
 const router = Router()
 
-router.get('/api/users', getUsers)
-router.get('/api/users/:id', getUser)
-router.post('/api/users', addUser)
-router.put('/api/users/:id', updateUser)
-router.delete('/api/users/:id', deleteUser)
+router.get('/api/users', [authenticateUser, checkIfAdmin, getUsers])
+router.get('/api/users/:id', [authenticateUser, getUser])
+//router.post('/api/users', addUser)
+router.put('/api/users/:id', [authenticateUser, updateUser])
+router.delete('/api/users/:id', [authenticateUser, deleteUser])
 router.post('/api/login', loginUser)
 router.post('/api/users/register', registerUser)
+router.get('/api/users/verify/:token', verifyEmailToken)
 router.get('/api/users/logout', logoutUser)
 router.get('/api/users/session', checkSession)
-router.get('/api/users/verify/:token', verifyTokenMiddleware, verifyToken)
+//router.get('/api/users/verify/:token', [verifyTokenMiddleware, verifyEmailToken])
 router.post('/api/users/:id', generateToken)
 router.post('/api/users/forgot', forgotPassword)
 router.get('/api/users/reset/:token', resetPassword)
@@ -66,10 +67,6 @@ router.post('/api/users/reset/:token', resetPasswordToken)
 router.post('/api/users/change', changePassword)
 router.post('/api/users/change/:token', changePasswordToken)
 router.post('/api/users/verify', verifyEmail)
-router.get('/api/users/verify/:token', verifyEmailToken)
-router.post('/api/users/forgot', forgotEmail)
-router.get('/api/users/reset/:token', resetEmail)
-router.post('/api/users/reset/:token', resetEmailToken)
 router.post('/api/users/change', changeEmail)
 router.post('/api/users/change/:token', changeEmailToken)
 router.post('/api/users/verify', verifyUsername)
@@ -101,5 +98,7 @@ router.delete('/api/jokes/:id/delete-user/:userId', deleteUserFromJoke)
 router.get('/api/', (req, res) => {
   res.send('Nothing to see here')
 })
+
+router.get('/verification-success', verificationSuccess)
 
 export default router
