@@ -2,6 +2,31 @@ import e, { Response, Request } from 'express'
 import { IJoke, EJokeType } from '../../types'
 import { Joke } from '../../models/joke'
 
+enum ELanguage {
+  en = 'en',
+  es = 'es',
+  fr = 'fr',
+  de = 'de',
+  pt = 'pt',
+  cs = 'cs',
+}
+enum EError {
+  en = 'An error occurred',
+  es = 'Ha ocurrido un error',
+  fr = 'Une erreur est survenue',
+  de = 'Ein Fehler ist aufgetreten',
+  pt = 'Ocorreu um erro',
+  cs = 'Došlo k chybě',
+}
+
+enum EAnErrorOccurredAddingTheJoke {
+  en = 'An error occurred adding the joke',
+  es = 'Ha ocurrido un error al agregar la broma',
+  fr = "Une erreur s'est produite lors de l'ajout de la blague",
+  de = 'Beim Hinzufügen des Witzes ist ein Fehler aufgetreten',
+  pt = 'Ocorreu um erro ao adicionar a piada',
+  cs = 'Při přidávání vtipu došlo k chybě',
+}
 const getJokes = async (req: Request, res: Response): Promise<void> => {
   try {
     const jokes: IJoke[] = await Joke.find()
@@ -36,10 +61,11 @@ const addJoke = async (req: Request, res: Response): Promise<void> => {
       'jokeId' | 'type' | 'category' | 'user' | 'language'
     >
 
-    // Validate input fields
-    if (!body.jokeId || !body.category || !body.user || !body.language) {
-      res.status(400).json({ message: 'Missing required fields' })
-    }
+    // // Validate input fields
+    // if (!body.jokeId || !body.category || !body.user || !body.language) {
+    //   res.status(400).json({ message: 'Missing required fields' })
+    //   return
+    // }
 
     let joke: IJoke
 
@@ -55,7 +81,7 @@ const addJoke = async (req: Request, res: Response): Promise<void> => {
     if (existingJoke) {
       // Check if the user ID already exists in the user array
       if (!existingJoke.user.includes(req.body.user)) {
-        existingJoke.user.push(req.body.user)
+        existingJoke.user.push(req.body.user[0])
         await existingJoke.save()
       }
       joke = mapToJoke(existingJoke)
@@ -67,7 +93,7 @@ const addJoke = async (req: Request, res: Response): Promise<void> => {
           category: body.category,
           type: body.type,
           safe: req.body.safe,
-          user: [body.user],
+          user: body.user,
           language: body.language,
         }).save()
 
@@ -80,7 +106,7 @@ const addJoke = async (req: Request, res: Response): Promise<void> => {
           category: body.category,
           type: body.type,
           safe: req.body.safe,
-          user: [body.user],
+          user: body.user,
           language: body.language,
         }).save()
 
@@ -88,30 +114,38 @@ const addJoke = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    res.status(201).json({ success: true, message: 'Joke added', data: joke })
+    res.status(201).json({ success: true, message: 'Joke added', joke })
   } catch (error) {
-    res.status(500).json({ success: false, message: 'An error occurred' })
     console.error('Error:', error)
+    res.status(500).json({
+      success: false,
+      message:
+        EAnErrorOccurredAddingTheJoke[req.body.language as ELanguage] ||
+        'An error occurred adding the joke',
+    })
   }
 }
 
 const updateJoke = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
-      params: { jokeId },
+      params: { jokeId, language },
       body,
     } = req
 
     let joke: IJoke
 
-    const updateJoke: IJoke | null = await Joke.findOneAndUpdate({ jokeId: jokeId }, body)
+    const updateJoke: IJoke | null = await Joke.findOneAndUpdate(
+      { jokeId, language },
+      body
+    )
     joke = mapToJoke(updateJoke)
 
-    const allJokes = await Joke.find()
-
-    res.status(200).json({ message: 'Joke updated', joke, jokes: allJokes })
+    res.status(200).json({ message: 'Joke updated', joke })
   } catch (error) {
-    res.status(500).json({ message: 'An error occurred' })
+    res
+      .status(500)
+      .json({ message: EError[req.params.lang as ELanguage] || 'An error occurred' })
     console.error('Error:', error)
   }
 }
@@ -135,7 +169,9 @@ const deleteUserFromJoke = async (req: Request, res: Response): Promise<void> =>
 
     res.status(200).json({ message: 'User deleted from joke', joke })
   } catch (error) {
-    res.status(500).json({ message: 'An error occurred' })
+    res
+      .status(500)
+      .json({ message: EError[req.params.lang as ELanguage] || 'An error occurred' })
     console.error('Error:', error)
   }
 }
@@ -160,7 +196,7 @@ const deleteUserFromJoke = async (req: Request, res: Response): Promise<void> =>
 //     res.status(200).json({ message: 'User deleted from joke', joke })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -177,20 +213,24 @@ const findJokeByJokeIdLanguageCategoryType = async (
     })
     res.status(200).json(joke)
   } catch (error) {
-    res.status(500).json({ message: 'An error occurred' })
+    res
+      .status(500)
+      .json({ message: EError[req.params.language as ELanguage] || 'An error occurred' })
     console.error('Error:', error)
   }
 }
 
-const getJokesByUsername = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const jokes: IJoke[] | null = await Joke.findOne({ user: req.params.username })
-    res.status(200).json({ jokes })
-  } catch (error) {
-    res.status(500).json({ message: 'An error occurred' })
-    console.error('Error:', error)
-  }
-}
+// const getJokesByUsername = async (req: Request, res: Response): Promise<void> => {
+//   try {
+//     const jokes: IJoke[] | null = await Joke.findOne({ user: req.params.username })
+//     res.status(200).json({ jokes })
+//   } catch (error) {
+//     res
+//       .status(500)
+//       .json({ message: EError[language as ELanguage] || 'An error occurred' })
+//     console.error('Error:', error)
+//   }
+// }
 
 const getJokesByUserId = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -209,7 +249,9 @@ const getJokesByUserAndCategory = async (req: Request, res: Response): Promise<v
     })
     res.status(200).json({ jokes })
   } catch (error) {
-    res.status(500).json({ message: 'An error occurred' })
+    res
+      .status(500)
+      .json({ message: EError[req.params.language as ELanguage] || 'An error occurred' })
     console.error('Error:', error)
   }
 }
@@ -222,7 +264,9 @@ const getJokesByUserAndType = async (req: Request, res: Response): Promise<void>
     })
     res.status(200).json({ jokes })
   } catch (error) {
-    res.status(500).json({ message: 'An error occurred' })
+    res
+      .status(500)
+      .json({ message: EError[req.params.language as ELanguage] || 'An error occurred' })
     console.error('Error:', error)
   }
 }
@@ -235,7 +279,9 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
     })
     res.status(200).json({ jokes })
   } catch (error) {
-    res.status(500).json({ message: 'An error occurred' })
+    res
+      .status(500)
+      .json({ message: EError[req.params.language as ELanguage] || 'An error occurred' })
     console.error('Error:', error)
   }
 }
@@ -253,7 +299,7 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
 //     res.status(200).json({ jokesSingle, jokesTwoPart })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -270,7 +316,7 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
 //     res.status(200).json({ jokesSingle, jokesTwoPart })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -287,7 +333,7 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
 //     res.status(200).json({ jokesSingle, jokesTwoPart })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -313,7 +359,7 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
 //     res.status(200).json({ jokesSingle, jokesTwoPart })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -421,7 +467,7 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
 //     // res.status(201).json({ message: 'Joke added', joke: newJoke, jokes: allJokes })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -508,7 +554,7 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
 //     res.status(200).json({ message: 'Joke updated', joke, jokes: allJokes })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -565,7 +611,7 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
 //     res.status(200).json({ jokeSingle, jokeTwoPart })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -639,7 +685,7 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
 //     })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -656,7 +702,7 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
 //     })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -667,7 +713,7 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
 //     res.status(200).json({ jokesSingle, jokesTwoPart })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -677,7 +723,7 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
 //     res.status(200).json({ jokesSingle })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -687,7 +733,7 @@ const getJokesByUserAndSafe = async (req: Request, res: Response): Promise<void>
 //     res.status(200).json({ jokesTwoPart })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 
@@ -696,7 +742,6 @@ export {
   addJoke,
   updateJoke,
   findJokeByJokeIdLanguageCategoryType,
-  getJokesByUsername,
   getJokesByUserId,
   getJokesByUserAndCategory,
   getJokesByUserAndType,

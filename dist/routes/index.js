@@ -5,7 +5,7 @@ const users_1 = require("../controllers/users");
 const jokes_1 = require("../controllers/jokes");
 const router = (0, express_1.Router)();
 router.get('/api/users', [users_1.authenticateUser, users_1.checkIfAdmin, users_1.getUsers]);
-router.get('/api/users/:id', [users_1.authenticateUser, users_1.getUser]);
+router.get('/api/users/:id', users_1.getUser);
 //router.post('/api/users', addUser)
 router.put('/api/users/:id', [users_1.authenticateUser, users_1.updateUser]);
 router.delete('/api/users/:id', [users_1.authenticateUser, users_1.deleteUser]);
@@ -33,7 +33,7 @@ router.post('/api/users/change', users_1.changeUsername);
 router.post('/api/users/change/:token', users_1.changeUsernameToken);
 router.get('/api/users/username/:username', users_1.findUserByUsername);
 // router.post('/api/users/:id/delete', deleteAllJokesByUserId)
-router.get('/api/users/:username/jokes', jokes_1.getJokesByUsername);
+// router.get('/api/users/:username/jokes', getJokesByUsername)
 router.get('/api/users/:id/categories/:category/jokes', jokes_1.getJokesByUserAndCategory);
 router.get('/api/users/:id/joketypes/:type/jokes', jokes_1.getJokesByUserAndType);
 router.get('/api/users/:id/safe/:safe/jokes', jokes_1.getJokesByUserAndSafe);
@@ -47,5 +47,5 @@ router.delete('/api/jokes/:id/delete-user/:userId', jokes_1.deleteUserFromJoke);
 router.get('/api/', (req, res) => {
     res.send('Nothing to see here');
 });
-router.get('/verification-success', users_1.verificationSuccess);
+//router.get('/api/users/verification-success', verificationSuccess)
 exports.default = router;

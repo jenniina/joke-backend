@@ -31,7 +31,7 @@ import {
   findUserByUsername,
   checkIfAdmin,
   authenticateUser,
-  verificationSuccess,
+  //verificationSuccess,
 } from '../controllers/users'
 import {
   getJokes,
@@ -43,14 +43,14 @@ import {
   getJokesByUserAndSafe,
   findJokeByJokeIdLanguageCategoryType,
   getJokesByUserId,
-  getJokesByUsername,
+  // getJokesByUsername,
   deleteUserFromJoke,
 } from '../controllers/jokes'
 
 const router = Router()
 
 router.get('/api/users', [authenticateUser, checkIfAdmin, getUsers])
-router.get('/api/users/:id', [authenticateUser, getUser])
+router.get('/api/users/:id', getUser)
 //router.post('/api/users', addUser)
 router.put('/api/users/:id', [authenticateUser, updateUser])
 router.delete('/api/users/:id', [authenticateUser, deleteUser])
@@ -79,7 +79,7 @@ router.post('/api/users/change/:token', changeUsernameToken)
 router.get('/api/users/username/:username', findUserByUsername)
 // router.post('/api/users/:id/delete', deleteAllJokesByUserId)
 
-router.get('/api/users/:username/jokes', getJokesByUsername)
+// router.get('/api/users/:username/jokes', getJokesByUsername)
 router.get('/api/users/:id/categories/:category/jokes', getJokesByUserAndCategory)
 router.get('/api/users/:id/joketypes/:type/jokes', getJokesByUserAndType)
 router.get('/api/users/:id/safe/:safe/jokes', getJokesByUserAndSafe)
@@ -99,6 +99,6 @@ router.get('/api/', (req, res) => {
   res.send('Nothing to see here')
 })
 
-router.get('/verification-success', verificationSuccess)
+//router.get('/api/users/verification-success', verificationSuccess)
 
 export default router
