@@ -5,6 +5,9 @@ const users_1 = require("../controllers/users");
 const jokes_1 = require("../controllers/jokes");
 const router = (0, express_1.Router)();
 router.post('/api/login', users_1.loginUser);
+router.post('/api/users/forgot', users_1.forgotPassword);
+router.get('/api/users/reset/:token', users_1.resetPassword);
+router.post('/api/users/reset/:token', users_1.resetPasswordToken);
 router.get('/api/users', [users_1.authenticateUser, users_1.checkIfAdmin, users_1.getUsers]);
 router.get('/api/users/:id', users_1.getUser);
 //router.post('/api/users', addUser)
@@ -16,9 +19,6 @@ router.get('/api/users/logout', users_1.logoutUser);
 router.get('/api/users/session', users_1.checkSession);
 //router.get('/api/users/verify/:token', [verifyTokenMiddleware, verifyEmailToken])
 router.post('/api/users/:id', users_1.generateToken);
-router.post('/api/users/forgot', users_1.forgotPassword);
-router.get('/api/users/reset/:token', users_1.resetPassword);
-router.post('/api/users/reset/:token', users_1.resetPasswordToken);
 router.post('/api/users/change', users_1.changePassword);
 router.post('/api/users/change/:token', users_1.changePasswordToken);
 router.post('/api/users/verify', users_1.verifyEmail);
@@ -26,7 +26,7 @@ router.post('/api/users/change', users_1.changeEmail);
 router.post('/api/users/change/:token', users_1.changeEmailToken);
 router.post('/api/users/verify', users_1.verifyUsername);
 router.get('/api/users/verify/:token', users_1.verifyUsernameToken);
-router.post('/api/users/forgot', users_1.forgotUsername);
+//router.post('/api/users/forgot', forgotUsername)
 router.get('/api/users/reset/:token', users_1.resetUsername);
 router.post('/api/users/reset/:token', users_1.resetUsernameToken);
 router.post('/api/users/change', users_1.changeUsername);

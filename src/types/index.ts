@@ -7,6 +7,7 @@ export interface IUser extends Document {
   language: ELanguages
   verified?: boolean
   token?: string
+  resetToken?: string
   createdAt?: string
   updatedAt?: string
 }

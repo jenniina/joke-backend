@@ -15,7 +15,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.refreshExpiredToken = exports.requestNewToken = exports.findUserByUsername = exports.verifyToken = exports.verifyTokenMiddleware = exports.generateToken = exports.changeUsernameToken = exports.changeUsername = exports.resetUsernameToken = exports.resetUsername = exports.forgotUsername = exports.verifyUsernameToken = exports.verifyUsername = exports.changeEmailToken = exports.changeEmail = exports.verifyEmailToken = exports.verifyEmail = exports.changePasswordToken = exports.changePassword = exports.resetPasswordToken = exports.resetPassword = exports.forgotPassword = exports.checkSession = exports.logoutUser = exports.registerUser = exports.loginUser = exports.deleteUser = exports.updateUser = exports.addUser = exports.getUser = exports.getUsers = exports.authenticateUser = exports.checkIfAdmin = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_1 = require("../../models/user");
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const flatted = require('flatted');
+const crypto = require('crypto');
+const key = crypto.randomBytes(32);
+// const key = createHash('sha256')
+//   .update(String(process.env.BRANCA_KEY))
+//   .digest('base64')
+//   .substr(0, 32)
+const branca = require('branca')(key);
 const dotenv = require('dotenv');
 dotenv.config();
 const nodemailer = require('nodemailer');
@@ -109,13 +116,63 @@ var ETokenSent;
     ETokenSent["pt"] = "Token enviado";
     ETokenSent["cs"] = "Token odesl\u00E1n";
 })(ETokenSent || (ETokenSent = {}));
-const generateToken = (userId) => {
-    if (!userId)
+var EPasswordReset;
+(function (EPasswordReset) {
+    EPasswordReset["en"] = "Password reset";
+    EPasswordReset["es"] = "Restablecimiento de contrase\u00F1a";
+    EPasswordReset["fr"] = "R\u00E9initialisation du mot de passe";
+    EPasswordReset["de"] = "Passwort zur\u00FCcksetzen";
+    EPasswordReset["pt"] = "Redefini\u00E7\u00E3o de senha";
+    EPasswordReset["cs"] = "Obnoven\u00ED hesla";
+})(EPasswordReset || (EPasswordReset = {}));
+var EResetPassword;
+(function (EResetPassword) {
+    EResetPassword["en"] = "Reset password";
+    EResetPassword["es"] = "Restablecer la contrase\u00F1a";
+    EResetPassword["fr"] = "R\u00E9initialiser le mot de passe";
+    EResetPassword["de"] = "Passwort zur\u00FCcksetzen";
+    EResetPassword["pt"] = "Redefinir senha";
+    EResetPassword["cs"] = "Obnovit heslo";
+})(EResetPassword || (EResetPassword = {}));
+var ENewPassword;
+(function (ENewPassword) {
+    ENewPassword["en"] = "New Password";
+    ENewPassword["es"] = "Nueva contrase\u00F1a";
+    ENewPassword["fr"] = "Nouveau mot de passe";
+    ENewPassword["de"] = "Neues Kennwort";
+    ENewPassword["pt"] = "Nova senha";
+    ENewPassword["cs"] = "Nov\u00E9 heslo";
+})(ENewPassword || (ENewPassword = {}));
+var EConfirmPassword;
+(function (EConfirmPassword) {
+    EConfirmPassword["en"] = "Confirm Password";
+    EConfirmPassword["es"] = "Confirmar contrase\u00F1a";
+    EConfirmPassword["fr"] = "Confirmez le mot de passe";
+    EConfirmPassword["de"] = "Kennwort best\u00E4tigen";
+    EConfirmPassword["pt"] = "Confirme a Senha";
+    EConfirmPassword["cs"] = "Potvr\u010Fte heslo";
+})(EConfirmPassword || (EConfirmPassword = {}));
+const generateToken = (id) => {
+    if (!id)
         return undefined;
-    const payload = { userId };
-    const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf';
-    const options = { expiresIn: '1d' };
-    return jsonwebtoken_1.default.sign(payload, secret, options);
+    // const id = JSON.stringify({
+    //   userId: userId,
+    // })
+    const json = flatted.stringify({
+        userId: id,
+    });
+    return branca.encode(json);
+    // const payload: ITokenPayload = { userId: userId }
+    // const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+    // const options = { expiresIn: '1d' }
+    // return jwt.sign(payload, secret, options, (err, token) => {
+    //   if (err) {
+    //     console.error(err)
+    //     return undefined
+    //   } else {
+    //     return token
+    //   }
+    // }) as IToken['token']
 };
 exports.generateToken = generateToken;
 // const verifyToken = (token: string): ITokenPayload => {
@@ -123,21 +180,19 @@ exports.generateToken = generateToken;
 //   return jwt.verify(token, secret) as ITokenPayload
 // }
 const verifyToken = (token) => {
-    const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf';
-    try {
-        if (token)
-            return jsonwebtoken_1.default.verify(token, secret);
-        else
-            return undefined;
-    }
-    catch (error) {
-        if (error.name === 'TokenExpiredError') {
-            throw new Error('Token expired');
-        }
-        else {
-            throw error; // Re-throw other errors
-        }
-    }
+    const json = branca.decode(token);
+    return JSON.parse(json);
+    // const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+    // try {
+    //   if (token) return jwt.verify(token, secret) as JwtPayload
+    //   else return undefined
+    // } catch (error) {
+    //   if ((error as Error).name === 'TokenExpiredError') {
+    //     throw new Error('Token expired')
+    //   } else {
+    //     throw error // Re-throw other errors
+    //   }
+    // }
 };
 exports.verifyToken = verifyToken;
 const verifyTokenMiddleware = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -398,6 +453,56 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.loginUser = loginUser;
+const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { username } = req.body;
+    console.log('usernameee', username);
+    const user = yield user_1.User.findOne({ username });
+    if (!user) {
+        res.status(401).json({ success: false, message: 'Error .' });
+    }
+    else if (user) {
+        try {
+            // const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+            // const userId = { userId: user._id }
+            //const token = jwt.sign(userId, secret, { expiresIn: '1d' })
+            //const token = '1234567890'
+            const token = generateToken(user._id);
+            console.log('token a', token);
+            const link = `${process.env.BASE_URI}/api/users/reset/${token}?lang=${user.language}`;
+            console.log('link 3', link);
+            //User.findOneAndUpdate({ username }, { $set: { resetToken: token } })
+            yield user_1.User.findOneAndUpdate({ username }, { resetToken: token });
+            sendMail(EPasswordReset[user.language], EResetPassword[user.language], username, user.language, link)
+                .then((result) => {
+                console.log('resulTT', result);
+                res.status(200).json({
+                    success: true,
+                    message: ETokenSent[user.language] || 'Token sent',
+                });
+            })
+                .catch((error) => {
+                console.log(error);
+                res.status(500).json({
+                    success: false,
+                    message: EErrorSendingMail[user.language] ||
+                        'Error sending mail',
+                });
+            });
+        }
+        catch (error) {
+            console.error('Error:', error);
+            const usern = req.body.username;
+            const userr = yield user_1.User.findOne({ username: usern });
+            res.status(500).json({
+                message: EError[(userr === null || userr === void 0 ? void 0 : userr.language) || 'en'] || 'Error ¤',
+            });
+        }
+    }
+    else {
+        res.status(401).json({ success: false, message: 'Error * ' });
+    }
+});
+exports.forgotPassword = forgotPassword;
 // }
 // const loginUser = async (req: Request, res: Response): Promise<void> => {
 //   const comparePassword = async function (
@@ -432,16 +537,15 @@ exports.loginUser = loginUser;
 //     res.status(500).json({ message: EError[(req.body.language as ELanguage) || 'en'] })
 //   }
 // }
-const sendMail = (username, language, link) => {
+const sendMail = (subject, message, username, language, link) => {
     console.log(language);
     console.log(link);
     return new Promise((resolve, reject) => {
         transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: username,
-            subject: EHelloWelcome[language] || 'Welcome',
-            text: EEmailMessage[language] + ': ' + link ||
-                'Please verify your email ' + ': ' + link,
+            subject: subject || 'Welcome',
+            text: message + ': ' + link || link,
         }, (error, info) => {
             if (error) {
                 console.log(error);
@@ -501,7 +605,8 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         bcrypt_1.default
             .hash(password, saltRounds)
             .then((hashedPassword) => {
-            return user_1.User.findOne({ username }).then((user) => {
+            return user_1.User.findOne({ username })
+                .then((user) => {
                 if (user) {
                     res.status(401).json({
                         message: `${ERegistrationFailed[user.language]}. ${EPleaseCheckYourEmailIfYouHaveAlreadyRegistered[user.language]}` ||
@@ -516,39 +621,50 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                         language,
                         verified: false,
                     });
-                    const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf';
-                    jsonwebtoken_1.default.sign({ userId: newUser._id }, secret, { expiresIn: '1d' }, (err, token) => {
-                        if (err) {
-                            console.error(err);
-                            res.status(500).json({
-                                message: EErrorCreatingToken[newUser === null || newUser === void 0 ? void 0 : newUser.language] || 'Error creating token',
+                    // const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+                    // jwt.sign(
+                    //   { userId: newUser._id },
+                    //   secret,
+                    //   { expiresIn: '1d' },
+                    //   (err, token) => {
+                    //     if (err) {
+                    //       console.error(err)
+                    //       res.status(500).json({
+                    //         message:
+                    //           EErrorCreatingToken[newUser?.language] || 'Error creating token',
+                    //       })
+                    // } else {
+                    const token = generateToken(newUser._id);
+                    const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`;
+                    console.log('link 2', link);
+                    newUser.token = token;
+                    sendMail(EHelloWelcome[language], EEmailMessage[language], username, language, link)
+                        .then((result) => {
+                        newUser.save().then((user) => {
+                            console.log('resulT', result);
+                            console.log('user', user);
+                            res.status(201).json({
+                                user,
+                                message: EMessage[language] || 'User registered',
                             });
-                        }
-                        else {
-                            const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`;
-                            console.log('link 2', link);
-                            newUser.token = token;
-                            sendMail(username, language, link)
-                                .then((result) => {
-                                newUser.save().then((user) => {
-                                    console.log('resulT', result);
-                                    console.log('user', user);
-                                    res.status(201).json({
-                                        user,
-                                        message: EMessage[language] || 'User registered',
-                                    });
-                                });
-                            })
-                                .catch((error) => {
-                                console.log(error);
-                                res.status(500).json({
-                                    message: EErrorSendingMail[language] ||
-                                        'Error sending mail',
-                                });
-                            });
-                        }
+                        });
+                    })
+                        .catch((error) => {
+                        console.log(error);
+                        res.status(500).json({
+                            message: EErrorSendingMail[language] || 'Error sending mail',
+                        });
                     });
+                    // }
                 }
+                // )
+                // }
+            })
+                .catch((error) => {
+                console.error(error);
+                res.status(500).json({
+                    message: EError[language || 'en'] || 'An error occurred',
+                });
             });
         })
             .catch((error) => __awaiter(void 0, void 0, void 0, function* () {
@@ -630,7 +746,7 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                         if (!(user === null || user === void 0 ? void 0 : user.verified)) {
                             const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`;
                             console.log('link 3', link);
-                            sendMail(body.username, body.language, link)
+                            sendMail(EHelloWelcome[body.language], EEmailMessage[body.language], body.username, body.language, link)
                                 .then((r) => {
                                 reject({
                                     success: false,
@@ -663,9 +779,9 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
             else {
                 // Verify the expired token and get the user ID
                 const decoded = verifyToken(token);
-                // Create a new token for the user
-                const newToken = generateToken(decoded === null || decoded === void 0 ? void 0 : decoded.userId);
-                // Send the new token back to the client
+                //// Create a new token for the user
+                //const newToken = generateToken(decoded?.userId)
+                //// Send the new token back to the client
                 //resolve({ success: true, message: 'Token refreshed successfully', newToken })
                 // Save the new token to the user
                 getUserById_(decoded === null || decoded === void 0 ? void 0 : decoded.userId)
@@ -674,42 +790,49 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                         reject(new Error(`${EErrorCreatingToken[body.language]} *`));
                         return;
                     }
-                    const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf';
-                    jsonwebtoken_1.default.sign({ userId: user._id }, secret, { expiresIn: '1d' }, (err, token) => {
-                        if (err) {
-                            console.error(err);
+                    else {
+                        // const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+                        // jwt.sign(
+                        //   { userId: user._id },
+                        //   secret,
+                        //   { expiresIn: '1d' },
+                        //   (err, token) => {
+                        //     if (err) {
+                        //       console.error(err)
+                        //       reject({
+                        //         success: false,
+                        //         message:
+                        //           EErrorCreatingToken[req.body.language as ELanguage] ||
+                        //           'Error creating token',
+                        //       })
+                        //     } else {
+                        user.token = token;
+                        const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${req.body.language}`;
+                        console.log('link 1', link);
+                        user
+                            .save()
+                            .then(() => {
+                            sendMail(EHelloWelcome[body.language], EEmailMessage[body.language], user.username, body.language, link);
+                        })
+                            .then((r) => {
+                            resolve({
+                                success: true,
+                                message: ` ${EUserNotVerified[req.body.language]}. ${ENewTokenSentToEmail[body.language]}` || 'New link sent to email',
+                                user,
+                            });
+                        })
+                            .catch((error) => {
+                            console.error(error);
                             reject({
                                 success: false,
-                                message: EErrorCreatingToken[req.body.language] ||
-                                    'Error creating token',
+                                message: EErrorSendingMail[req.body.language] ||
+                                    'Error sending mail ¤',
                             });
-                        }
-                        else {
-                            user.token = token;
-                            const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${req.body.language}`;
-                            console.log('link 1', link);
-                            user
-                                .save()
-                                .then(() => {
-                                sendMail(user.username, body.language, link);
-                            })
-                                .then((r) => {
-                                resolve({
-                                    success: true,
-                                    message: ` ${EUserNotVerified[req.body.language]}. ${ENewTokenSentToEmail[body.language]}` || 'New link sent to email',
-                                    user,
-                                });
-                            })
-                                .catch((error) => {
-                                console.error(error);
-                                reject({
-                                    success: false,
-                                    message: EErrorSendingMail[req.body.language] ||
-                                        'Error sending mail ¤',
-                                });
-                            });
-                        }
-                    });
+                        });
+                    }
+                    // }
+                    // )
+                    // }
                 })
                     .catch((error) => {
                     console.error(error);
@@ -1181,33 +1304,239 @@ const checkSession = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.checkSession = checkSession;
-const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        res.status(200).json({ message: 'Password forgot' });
-    }
-    catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
-    }
-});
-exports.forgotPassword = forgotPassword;
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _h, _j, _k, _l, _m;
+    const { token } = req.params;
     try {
-        res.status(200).json({ message: 'Password reset' });
+        // Validate the token
+        const user = yield user_1.User.findOne({ resetToken: token });
+        if (!user) {
+            res.status(400).json({ success: false, message: 'Invalid or expired token' });
+        }
+        const language = req.query.lang || 'en';
+        const htmlResponse = `
+    <html lang=${language}>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style> 
+        @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Oswald:wght@500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
+          body {
+            font-family: Lato, Helvetica, Arial, sans-serif;
+            background-color: hsl(219, 100%, 10%);
+            color: white;
+            letter-spacing: -0.03em;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height: 100vh;
+          }
+          body > div {
+            margin: 0 auto;
+            max-width: 800px;  
+          }
+          h1 {
+            font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
+            text-align: center;
+          }
+          p {
+            font-size: 18px;
+            text-align: center;
+          }
+          a {
+            color: white;
+          }
+        </style>
+        <title>
+        ${(_h = ETheComediansCompanion[language]) !== null && _h !== void 0 ? _h : "The Comedian' Companion"}</title>
+      </head>
+      <body>
+      <div>
+        <h1>${(_j = EPasswordReset[language]) !== null && _j !== void 0 ? _j : 'Password Reset'}</h1>
+        <form action="/api/users/reset/${token}?lang=${language}" method="post">
+        <label for="newPassword">${(_k = ENewPassword[language]) !== null && _k !== void 0 ? _k : 'New password'}:</label>
+        <input type="password" id="newPassword" name="newPassword" required>
+        <label for="confirmPassword">${(_l = EConfirmPassword[language]) !== null && _l !== void 0 ? _l : 'Confirm Password'}:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required>
+        <button type="submit">${(_m = EResetPassword[language]) !== null && _m !== void 0 ? _m : 'Reset password'}</button>
+      </form> 
+      </div>
+      </body>
+    </html>
+  `;
+        res.send(htmlResponse);
     }
     catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Internal Server Error *' });
     }
 });
 exports.resetPassword = resetPassword;
 const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _o, _p, _q, _r, _s, _t, _u, _v;
+    const { token } = req.params;
+    const { newPassword, confirmPassword } = req.body;
+    const language = req.query.lang || 'en';
+    let EPasswordResetSuccessfully;
+    (function (EPasswordResetSuccessfully) {
+        EPasswordResetSuccessfully["en"] = "Password reset successfully";
+        EPasswordResetSuccessfully["es"] = "Restablecimiento de contrase\u00F1a exitoso";
+        EPasswordResetSuccessfully["fr"] = "R\u00E9initialisation du mot de passe r\u00E9ussie";
+        EPasswordResetSuccessfully["de"] = "Passwort erfolgreich zur\u00FCckgesetzt";
+        EPasswordResetSuccessfully["pt"] = "Redefini\u00E7\u00E3o de senha bem-sucedida";
+        EPasswordResetSuccessfully["cs"] = "Obnoven\u00ED hesla bylo \u00FAsp\u011B\u0161n\u00E9";
+    })(EPasswordResetSuccessfully || (EPasswordResetSuccessfully = {}));
+    let EPasswordsDoNotMatch;
+    (function (EPasswordsDoNotMatch) {
+        EPasswordsDoNotMatch["en"] = "Passwords do not match";
+        EPasswordsDoNotMatch["es"] = "Las contrase\u00F1as no coinciden";
+        EPasswordsDoNotMatch["fr"] = "Les mots de passe ne correspondent pas";
+        EPasswordsDoNotMatch["de"] = "Passw\u00F6rter stimmen nicht \u00FCberein";
+        EPasswordsDoNotMatch["pt"] = "As senhas n\u00E3o coincidem";
+        EPasswordsDoNotMatch["cs"] = "Hesla se neshoduj\u00ED";
+    })(EPasswordsDoNotMatch || (EPasswordsDoNotMatch = {}));
     try {
-        res.status(200).json({ message: 'Password reset with token' });
+        // Validate the token
+        const user = yield user_1.User.findOne({ resetToken: token });
+        if (!user) {
+            res.status(400).json({ message: 'Invalid or expired token' });
+        }
+        if (user) {
+            // Check if newPassword and confirmPassword match
+            if (newPassword !== confirmPassword) {
+                // res.status(400).json({
+                //   success: false,
+                //   message:
+                //     EPasswordsDoNotMatch[language as keyof typeof EPasswordsDoNotMatch] ||
+                //     'Passwords do not match',
+                // })
+                const htmlResponse = `
+    <html lang=${language}>
+      <head>
+      
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style> 
+        @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Oswald:wght@500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
+          body {
+            font-family: Lato, Helvetica, Arial, sans-serif;
+            background-color: hsl(219, 100%, 10%);
+            color: white;
+            letter-spacing: -0.03em;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height: 100vh;
+          }
+          body > div {
+            margin: 0 auto;
+            max-width: 800px;  
+          }
+          h1 {
+            font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
+            text-align: center;
+          }
+          p {
+            font-size: 18px;
+            text-align: center;
+          }
+          a {
+            color: white;
+          }
+        </style>
+        <title>
+        ${(_o = ETheComediansCompanion[language]) !== null && _o !== void 0 ? _o : "The Comedian' Companion"}</title>
+      </head>
+      <body>
+      <div>
+        <h1>${(_p = EPasswordReset[language]) !== null && _p !== void 0 ? _p : 'Password Reset'}</h1>
+        <form action="/api/users/reset/${token}?lang=${language}" method="post">
+        <label for="newPassword">${(_q = ENewPassword[language]) !== null && _q !== void 0 ? _q : 'New password'}:</label>
+        <input type="password" id="newPassword" name="newPassword" required>
+        <label for="confirmPassword">${(_r = EConfirmPassword[language]) !== null && _r !== void 0 ? _r : 'Confirm Password'}:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required>
+        <p>${(_s = EPasswordsDoNotMatch[language]) !== null && _s !== void 0 ? _s : 'Passwords do not match!'}</p>
+        <button type="submit">${(_t = EResetPassword[language]) !== null && _t !== void 0 ? _t : 'Reset password'}</button>
+      </form> 
+      </div>
+      </body>
+    </html>
+  `;
+                res.send(htmlResponse);
+            }
+            else {
+                // Handle password update logic
+                // ... (update the user's password in your database)
+                const saltRounds = 10;
+                const hashedPassword = yield bcrypt_1.default.hash(newPassword, saltRounds);
+                // user.password = hashedPassword
+                // // Clear the resetToken field in the database
+                // user.resetToken = undefined
+                // await user
+                //   .save()
+                const updatedUser = yield user_1.User.findOneAndUpdate({ resetToken: token }, { resetToken: undefined, password: hashedPassword }, { new: true }).exec();
+                if (updatedUser) {
+                    res.send(`
+      <!DOCTYPE html>
+      <html lang=${language}>
+      <head>
+      
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style> 
+        @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Oswald:wght@500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
+          body {
+            font-family: Lato, Helvetica, Arial, sans-serif;
+            background-color: hsl(219, 100%, 10%);
+            color: white;
+            letter-spacing: -0.03em;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height: 100vh;
+          }
+          body > div {
+            margin: 0 auto;
+            max-width: 800px;  
+          }
+          h1 {
+            font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
+            text-align: center;
+          }
+          p {
+            font-size: 18px;
+            text-align: center;
+          }
+          a {
+            color: white;
+          }
+        </style>
+        <title>
+        ${(_u = ETheComediansCompanion[language]) !== null && _u !== void 0 ? _u : "The Comedian' Companion"}</title>
+      </head>
+      <body>
+      <div>
+        <h1>${EPasswordResetSuccessfully[language] || 'Password reset successfully'}</h1>
+        <p>
+        <a href="https://react-az.jenniina.fi">${(_v = EBackToTheApp[language]) !== null && _v !== void 0 ? _v : 'Back to the app'}</a>
+        </p>
+      </div>
+      </body>
+    </html>
+    `);
+                }
+                else {
+                    res.status(500).json({ success: false, message: 'Internal Server Error *¤' });
+                }
+            }
+        }
     }
     catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Internal Server Error ¤' });
     }
 });
 exports.resetPasswordToken = resetPasswordToken;

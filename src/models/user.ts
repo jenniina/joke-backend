@@ -3,6 +3,11 @@ import { model, Schema } from 'mongoose'
 
 const userSchema: Schema = new Schema(
   {
+    _id: {
+      type: String,
+      required: false,
+      minlength: 2,
+    },
     username: {
       type: String,
       required: true,
@@ -39,7 +44,12 @@ const userSchema: Schema = new Schema(
     token: {
       type: String,
       required: false,
-      default: '',
+      default: undefined,
+    },
+    resetToken: {
+      type: String,
+      required: false,
+      default: undefined,
     },
   },
   { timestamps: true }

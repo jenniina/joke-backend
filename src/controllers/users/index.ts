@@ -4,6 +4,18 @@ import { IUser } from '../../types'
 import { User } from '../../models/user'
 import { ITokenPayload, IToken } from '../../types'
 import jwt, { JwtPayload, Secret } from 'jsonwebtoken'
+const flatted = require('flatted')
+import { createHash, randomBytes, createCipheriv } from 'crypto'
+const crypto = require('crypto')
+
+const key = crypto.randomBytes(32)
+
+// const key = createHash('sha256')
+//   .update(String(process.env.BRANCA_KEY))
+//   .digest('base64')
+//   .substr(0, 32)
+const branca = require('branca')(key)
+
 const dotenv = require('dotenv')
 dotenv.config()
 
@@ -91,13 +103,59 @@ enum ETokenSent {
   pt = 'Token enviado',
   cs = 'Token odeslán',
 }
+enum EPasswordReset {
+  en = 'Password reset',
+  es = 'Restablecimiento de contraseña',
+  fr = 'Réinitialisation du mot de passe',
+  de = 'Passwort zurücksetzen',
+  pt = 'Redefinição de senha',
+  cs = 'Obnovení hesla',
+}
+enum EResetPassword {
+  en = 'Reset password',
+  es = 'Restablecer la contraseña',
+  fr = 'Réinitialiser le mot de passe',
+  de = 'Passwort zurücksetzen',
+  pt = 'Redefinir senha',
+  cs = 'Obnovit heslo',
+}
+enum ENewPassword {
+  en = 'New Password',
+  es = 'Nueva contraseña',
+  fr = 'Nouveau mot de passe',
+  de = 'Neues Kennwort',
+  pt = 'Nova senha',
+  cs = 'Nové heslo',
+}
+enum EConfirmPassword {
+  en = 'Confirm Password',
+  es = 'Confirmar contraseña',
+  fr = 'Confirmez le mot de passe',
+  de = 'Kennwort bestätigen',
+  pt = 'Confirme a Senha',
+  cs = 'Potvrďte heslo',
+}
 
-const generateToken = (userId: string | undefined): string | undefined => {
-  if (!userId) return undefined
-  const payload: ITokenPayload = { userId }
-  const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
-  const options = { expiresIn: '1d' }
-  return jwt.sign(payload, secret, options) as IToken['token']
+const generateToken = (id: string | undefined): string | undefined => {
+  if (!id) return undefined
+  // const id = JSON.stringify({
+  //   userId: userId,
+  // })
+  const json = flatted.stringify({
+    userId: id,
+  })
+  return branca.encode(json)
+  // const payload: ITokenPayload = { userId: userId }
+  // const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+  // const options = { expiresIn: '1d' }
+  // return jwt.sign(payload, secret, options, (err, token) => {
+  //   if (err) {
+  //     console.error(err)
+  //     return undefined
+  //   } else {
+  //     return token
+  //   }
+  // }) as IToken['token']
 }
 
 // const verifyToken = (token: string): ITokenPayload => {
@@ -106,17 +164,19 @@ const generateToken = (userId: string | undefined): string | undefined => {
 // }
 
 const verifyToken = (token: string | undefined) => {
-  const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
-  try {
-    if (token) return jwt.verify(token, secret) as JwtPayload
-    else return undefined
-  } catch (error) {
-    if ((error as Error).name === 'TokenExpiredError') {
-      throw new Error('Token expired')
-    } else {
-      throw error // Re-throw other errors
-    }
-  }
+  const json = branca.decode(token)
+  return JSON.parse(json)
+  // const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+  // try {
+  //   if (token) return jwt.verify(token, secret) as JwtPayload
+  //   else return undefined
+  // } catch (error) {
+  //   if ((error as Error).name === 'TokenExpiredError') {
+  //     throw new Error('Token expired')
+  //   } else {
+  //     throw error // Re-throw other errors
+  //   }
+  // }
 }
 
 const verifyTokenMiddleware = async (req: Request, res: Response): Promise<void> => {
@@ -377,6 +437,60 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
+const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  const { username } = req.body
+  console.log('usernameee', username)
+  const user: IUser | null = await User.findOne({ username })
+  if (!user) {
+    res.status(401).json({ success: false, message: 'Error .' })
+  } else if (user) {
+    try {
+      // const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+      // const userId = { userId: user._id }
+      //const token = jwt.sign(userId, secret, { expiresIn: '1d' })
+      //const token = '1234567890'
+      const token = generateToken(user._id)
+      console.log('token a', token)
+      const link = `${process.env.BASE_URI}/api/users/reset/${token}?lang=${user.language}`
+      console.log('link 3', link)
+      //User.findOneAndUpdate({ username }, { $set: { resetToken: token } })
+      await User.findOneAndUpdate({ username }, { resetToken: token })
+      sendMail(
+        EPasswordReset[user.language as unknown as ELanguage],
+        EResetPassword[user.language as unknown as ELanguage],
+        username,
+        user.language as unknown as ELanguage,
+        link
+      )
+        .then((result) => {
+          console.log('resulTT', result)
+          res.status(200).json({
+            success: true,
+            message: ETokenSent[user.language as unknown as ELanguage] || 'Token sent',
+          })
+        })
+        .catch((error) => {
+          console.log(error)
+          res.status(500).json({
+            success: false,
+            message:
+              EErrorSendingMail[user.language as unknown as ELanguage] ||
+              'Error sending mail',
+          })
+        })
+    } catch (error) {
+      console.error('Error:', error)
+      const usern = req.body.username
+      const userr: IUser | null = await User.findOne({ username: usern })
+      res.status(500).json({
+        message: EError[(userr?.language as unknown as ELanguage) || 'en'] || 'Error ¤',
+      })
+    }
+  } else {
+    res.status(401).json({ success: false, message: 'Error * ' })
+  }
+}
+
 // }
 
 // const loginUser = async (req: Request, res: Response): Promise<void> => {
@@ -413,7 +527,13 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
 //   }
 // }
 
-const sendMail = (username: IUser['username'], language: ELanguage, link: string) => {
+const sendMail = (
+  subject: string,
+  message: string,
+  username: IUser['username'],
+  language: ELanguage,
+  link: string
+) => {
   console.log(language)
   console.log(link)
   return new Promise((resolve, reject) => {
@@ -421,10 +541,8 @@ const sendMail = (username: IUser['username'], language: ELanguage, link: string
       {
         from: process.env.EMAIL_USER,
         to: username,
-        subject: EHelloWelcome[language as ELanguage] || 'Welcome',
-        text:
-          EEmailMessage[language as ELanguage] + ': ' + link ||
-          'Please verify your email ' + ': ' + link,
+        subject: subject || 'Welcome',
+        text: message + ': ' + link || link,
       },
       (error: Error, info: { response: unknown }) => {
         if (error) {
@@ -485,66 +603,78 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
     bcrypt
       .hash(password, saltRounds)
       .then((hashedPassword) => {
-        return User.findOne({ username }).then((user) => {
-          if (user) {
-            res.status(401).json({
-              message:
-                `${ERegistrationFailed[user.language]}. ${
-                  EPleaseCheckYourEmailIfYouHaveAlreadyRegistered[user.language]
-                }` ||
-                'Registration failed, Please check your email if you have already registered',
-            })
-          } else {
-            const newUser = new User({
-              username,
-              password: hashedPassword,
-              jokes,
-              language,
-              verified: false,
-            })
+        return User.findOne({ username })
+          .then((user) => {
+            if (user) {
+              res.status(401).json({
+                message:
+                  `${ERegistrationFailed[user.language]}. ${
+                    EPleaseCheckYourEmailIfYouHaveAlreadyRegistered[user.language]
+                  }` ||
+                  'Registration failed, Please check your email if you have already registered',
+              })
+            } else {
+              const newUser = new User({
+                username,
+                password: hashedPassword,
+                jokes,
+                language,
+                verified: false,
+              })
 
-            const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+              // const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+              // jwt.sign(
+              //   { userId: newUser._id },
+              //   secret,
+              //   { expiresIn: '1d' },
+              //   (err, token) => {
+              //     if (err) {
+              //       console.error(err)
+              //       res.status(500).json({
+              //         message:
+              //           EErrorCreatingToken[newUser?.language] || 'Error creating token',
+              //       })
+              // } else {
+              const token = generateToken(newUser._id)
+              const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`
+              console.log('link 2', link)
+              newUser.token = token
 
-            jwt.sign(
-              { userId: newUser._id },
-              secret,
-              { expiresIn: '1d' },
-              (err, token) => {
-                if (err) {
-                  console.error(err)
+              sendMail(
+                EHelloWelcome[language as ELanguage],
+                EEmailMessage[language as ELanguage],
+                username,
+                language,
+                link
+              )
+                .then((result) => {
+                  newUser.save().then((user: IUser) => {
+                    console.log('resulT', result)
+                    console.log('user', user)
+                    res.status(201).json({
+                      user,
+                      message: EMessage[language as ELanguage] || 'User registered',
+                    })
+                  })
+                })
+                .catch((error) => {
+                  console.log(error)
                   res.status(500).json({
                     message:
-                      EErrorCreatingToken[newUser?.language] || 'Error creating token',
+                      EErrorSendingMail[language as ELanguage] || 'Error sending mail',
                   })
-                } else {
-                  const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`
-                  console.log('link 2', link)
-                  newUser.token = token
-
-                  sendMail(username, language, link)
-                    .then((result) => {
-                      newUser.save().then((user: IUser) => {
-                        console.log('resulT', result)
-                        console.log('user', user)
-                        res.status(201).json({
-                          user,
-                          message: EMessage[language as ELanguage] || 'User registered',
-                        })
-                      })
-                    })
-                    .catch((error) => {
-                      console.log(error)
-                      res.status(500).json({
-                        message:
-                          EErrorSendingMail[language as ELanguage] ||
-                          'Error sending mail',
-                      })
-                    })
-                }
-              }
-            )
-          }
-        })
+                })
+              // }
+            }
+            // )
+            // }
+          })
+          .catch((error) => {
+            console.error(error)
+            res.status(500).json({
+              message: EError[(language as ELanguage) || 'en'] || 'An error occurred',
+            })
+          })
       })
       .catch(async (error) => {
         console.error(error)
@@ -649,7 +779,13 @@ const refreshExpiredToken = async (
               if (!user?.verified) {
                 const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`
                 console.log('link 3', link)
-                sendMail(body.username, body.language as unknown as ELanguage, link)
+                sendMail(
+                  EHelloWelcome[body.language as keyof typeof EHelloWelcome],
+                  EEmailMessage[body.language as keyof typeof EEmailMessage],
+                  body.username,
+                  body.language as unknown as ELanguage,
+                  link
+                )
                   .then((r) => {
                     reject({
                       success: false,
@@ -688,10 +824,10 @@ const refreshExpiredToken = async (
         // Verify the expired token and get the user ID
         const decoded = verifyToken(token)
 
-        // Create a new token for the user
-        const newToken = generateToken(decoded?.userId)
+        //// Create a new token for the user
+        //const newToken = generateToken(decoded?.userId)
 
-        // Send the new token back to the client
+        //// Send the new token back to the client
         //resolve({ success: true, message: 'Token refreshed successfully', newToken })
 
         // Save the new token to the user
@@ -706,55 +842,66 @@ const refreshExpiredToken = async (
                 )
               )
               return
-            }
+            } else {
+              // const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+              // jwt.sign(
+              //   { userId: user._id },
+              //   secret,
+              //   { expiresIn: '1d' },
+              //   (err, token) => {
+              //     if (err) {
+              //       console.error(err)
+              //       reject({
+              //         success: false,
+              //         message:
+              //           EErrorCreatingToken[req.body.language as ELanguage] ||
+              //           'Error creating token',
+              //       })
+              //     } else {
+              user.token = token
 
-            const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
-            jwt.sign({ userId: user._id }, secret, { expiresIn: '1d' }, (err, token) => {
-              if (err) {
-                console.error(err)
-                reject({
-                  success: false,
-                  message:
-                    EErrorCreatingToken[req.body.language as ELanguage] ||
-                    'Error creating token',
+              const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${req.body.language}`
+              console.log('link 1', link)
+              user
+                .save()
+                .then(() => {
+                  sendMail(
+                    EHelloWelcome[body.language as keyof typeof EHelloWelcome],
+                    EEmailMessage[body.language as keyof typeof EHelloWelcome],
+                    user.username,
+                    body.language as unknown as ELanguage,
+                    link
+                  )
                 })
-              } else {
-                user.token = token
-
-                const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${req.body.language}`
-                console.log('link 1', link)
-                user
-                  .save()
-                  .then(() => {
-                    sendMail(user.username, body.language as unknown as ELanguage, link)
+                .then((r) => {
+                  resolve({
+                    success: true,
+                    message:
+                      ` ${
+                        EUserNotVerified[
+                          req.body.language as keyof typeof EUserNotVerified
+                        ]
+                      }. ${
+                        ENewTokenSentToEmail[
+                          body.language as keyof typeof ENewTokenSentToEmail
+                        ]
+                      }` || 'New link sent to email',
+                    user,
                   })
-                  .then((r) => {
-                    resolve({
-                      success: true,
-                      message:
-                        ` ${
-                          EUserNotVerified[
-                            req.body.language as keyof typeof EUserNotVerified
-                          ]
-                        }. ${
-                          ENewTokenSentToEmail[
-                            body.language as keyof typeof ENewTokenSentToEmail
-                          ]
-                        }` || 'New link sent to email',
-                      user,
-                    })
+                })
+                .catch((error) => {
+                  console.error(error)
+                  reject({
+                    success: false,
+                    message:
+                      EErrorSendingMail[req.body.language as ELanguage] ||
+                      'Error sending mail ¤',
                   })
-                  .catch((error) => {
-                    console.error(error)
-                    reject({
-                      success: false,
-                      message:
-                        EErrorSendingMail[req.body.language as ELanguage] ||
-                        'Error sending mail ¤',
-                    })
-                  })
-              }
-            })
+                })
+            }
+            // }
+            // )
+            // }
           })
           .catch((error) => {
             console.error(error)
@@ -1257,30 +1404,266 @@ const checkSession = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
-const forgotPassword = async (req: Request, res: Response): Promise<void> => {
-  try {
-    res.status(200).json({ message: 'Password forgot' })
-  } catch (error) {
-    console.error('Error:', error)
-    res.status(500).json({ message: EError[(req.body.language as ELanguage) || 'en'] })
-  }
-}
-
 const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  const { token } = req.params
+
   try {
-    res.status(200).json({ message: 'Password reset' })
+    // Validate the token
+    const user = await User.findOne({ resetToken: token })
+
+    if (!user) {
+      res.status(400).json({ success: false, message: 'Invalid or expired token' })
+    }
+
+    const language = req.query.lang || 'en'
+
+    const htmlResponse = `
+    <html lang=${language}>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style> 
+        @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Oswald:wght@500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
+          body {
+            font-family: Lato, Helvetica, Arial, sans-serif;
+            background-color: hsl(219, 100%, 10%);
+            color: white;
+            letter-spacing: -0.03em;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height: 100vh;
+          }
+          body > div {
+            margin: 0 auto;
+            max-width: 800px;  
+          }
+          h1 {
+            font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
+            text-align: center;
+          }
+          p {
+            font-size: 18px;
+            text-align: center;
+          }
+          a {
+            color: white;
+          }
+        </style>
+        <title>
+        ${
+          ETheComediansCompanion[language as ELanguage] ?? "The Comedian' Companion"
+        }</title>
+      </head>
+      <body>
+      <div>
+        <h1>${EPasswordReset[language as ELanguage] ?? 'Password Reset'}</h1>
+        <form action="/api/users/reset/${token}?lang=${language}" method="post">
+        <label for="newPassword">${
+          ENewPassword[language as ELanguage] ?? 'New password'
+        }:</label>
+        <input type="password" id="newPassword" name="newPassword" required>
+        <label for="confirmPassword">${
+          EConfirmPassword[language as ELanguage] ?? 'Confirm Password'
+        }:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required>
+        <button type="submit">${
+          EResetPassword[language as ELanguage] ?? 'Reset password'
+        }</button>
+      </form> 
+      </div>
+      </body>
+    </html>
+  `
+    res.send(htmlResponse)
   } catch (error) {
-    console.error('Error:', error)
-    res.status(500).json({ message: EError[(req.body.language as ELanguage) || 'en'] })
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Internal Server Error *' })
   }
 }
 
 const resetPasswordToken = async (req: Request, res: Response): Promise<void> => {
+  const { token } = req.params
+  const { newPassword, confirmPassword } = req.body
+  const language = req.query.lang || 'en'
+
+  enum EPasswordResetSuccessfully {
+    en = 'Password reset successfully',
+    es = 'Restablecimiento de contraseña exitoso',
+    fr = 'Réinitialisation du mot de passe réussie',
+    de = 'Passwort erfolgreich zurückgesetzt',
+    pt = 'Redefinição de senha bem-sucedida',
+    cs = 'Obnovení hesla bylo úspěšné',
+  }
+  enum EPasswordsDoNotMatch {
+    en = 'Passwords do not match',
+    es = 'Las contraseñas no coinciden',
+    fr = 'Les mots de passe ne correspondent pas',
+    de = 'Passwörter stimmen nicht überein',
+    pt = 'As senhas não coincidem',
+    cs = 'Hesla se neshodují',
+  }
+
   try {
-    res.status(200).json({ message: 'Password reset with token' })
+    // Validate the token
+    const user = await User.findOne({ resetToken: token })
+    if (!user) {
+      res.status(400).json({ message: 'Invalid or expired token' })
+    }
+    if (user) {
+      // Check if newPassword and confirmPassword match
+      if (newPassword !== confirmPassword) {
+        // res.status(400).json({
+        //   success: false,
+        //   message:
+        //     EPasswordsDoNotMatch[language as keyof typeof EPasswordsDoNotMatch] ||
+        //     'Passwords do not match',
+        // })
+        const htmlResponse = `
+    <html lang=${language}>
+      <head>
+      
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style> 
+        @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Oswald:wght@500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
+          body {
+            font-family: Lato, Helvetica, Arial, sans-serif;
+            background-color: hsl(219, 100%, 10%);
+            color: white;
+            letter-spacing: -0.03em;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height: 100vh;
+          }
+          body > div {
+            margin: 0 auto;
+            max-width: 800px;  
+          }
+          h1 {
+            font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
+            text-align: center;
+          }
+          p {
+            font-size: 18px;
+            text-align: center;
+          }
+          a {
+            color: white;
+          }
+        </style>
+        <title>
+        ${
+          ETheComediansCompanion[language as ELanguage] ?? "The Comedian' Companion"
+        }</title>
+      </head>
+      <body>
+      <div>
+        <h1>${EPasswordReset[language as ELanguage] ?? 'Password Reset'}</h1>
+        <form action="/api/users/reset/${token}?lang=${language}" method="post">
+        <label for="newPassword">${
+          ENewPassword[language as ELanguage] ?? 'New password'
+        }:</label>
+        <input type="password" id="newPassword" name="newPassword" required>
+        <label for="confirmPassword">${
+          EConfirmPassword[language as ELanguage] ?? 'Confirm Password'
+        }:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required>
+        <p>${EPasswordsDoNotMatch[language as ELanguage] ?? 'Passwords do not match!'}</p>
+        <button type="submit">${
+          EResetPassword[language as ELanguage] ?? 'Reset password'
+        }</button>
+      </form> 
+      </div>
+      </body>
+    </html>
+  `
+        res.send(htmlResponse)
+      } else {
+        // Handle password update logic
+        // ... (update the user's password in your database)
+        const saltRounds = 10
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds)
+        // user.password = hashedPassword
+
+        // // Clear the resetToken field in the database
+        // user.resetToken = undefined
+        // await user
+        //   .save()
+        const updatedUser = await User.findOneAndUpdate(
+          { resetToken: token },
+          { resetToken: undefined, password: hashedPassword },
+          { new: true }
+        ).exec()
+        if (updatedUser) {
+          res.send(`
+      <!DOCTYPE html>
+      <html lang=${language}>
+      <head>
+      
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style> 
+        @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Oswald:wght@500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
+          body {
+            font-family: Lato, Helvetica, Arial, sans-serif;
+            background-color: hsl(219, 100%, 10%);
+            color: white;
+            letter-spacing: -0.03em;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height: 100vh;
+          }
+          body > div {
+            margin: 0 auto;
+            max-width: 800px;  
+          }
+          h1 {
+            font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
+            text-align: center;
+          }
+          p {
+            font-size: 18px;
+            text-align: center;
+          }
+          a {
+            color: white;
+          }
+        </style>
+        <title>
+        ${
+          ETheComediansCompanion[language as ELanguage] ?? "The Comedian' Companion"
+        }</title>
+      </head>
+      <body>
+      <div>
+        <h1>${
+          EPasswordResetSuccessfully[
+            language as keyof typeof EPasswordResetSuccessfully
+          ] || 'Password reset successfully'
+        }</h1>
+        <p>
+        <a href="https://react-az.jenniina.fi">${
+          EBackToTheApp[language as ELanguage] ?? 'Back to the app'
+        }</a>
+        </p>
+      </div>
+      </body>
+    </html>
+    `)
+        } else {
+          res.status(500).json({ success: false, message: 'Internal Server Error *¤' })
+        }
+      }
+    }
   } catch (error) {
-    console.error('Error:', error)
-    res.status(500).json({ message: EError[(req.body.language as ELanguage) || 'en'] })
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Internal Server Error ¤' })
   }
 }
 
