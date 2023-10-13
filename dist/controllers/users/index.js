@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.findUserByUsername = exports.verifyToken = exports.verifyTokenMiddleware = exports.generateToken = exports.changeUsernameToken = exports.changeUsername = exports.resetUsernameToken = exports.resetUsername = exports.forgotUsername = exports.verifyUsernameToken = exports.verifyUsername = exports.changeEmailToken = exports.changeEmail = exports.verifyEmailToken = exports.verifyEmail = exports.changePasswordToken = exports.changePassword = exports.resetPasswordToken = exports.resetPassword = exports.forgotPassword = exports.checkSession = exports.logoutUser = exports.registerUser = exports.loginUser = exports.deleteUser = exports.updateUser = exports.addUser = exports.getUser = exports.getUsers = exports.authenticateUser = exports.checkIfAdmin = void 0;
+exports.refreshExpiredToken = exports.requestNewToken = exports.findUserByUsername = exports.verifyToken = exports.verifyTokenMiddleware = exports.generateToken = exports.changeUsernameToken = exports.changeUsername = exports.resetUsernameToken = exports.resetUsername = exports.forgotUsername = exports.verifyUsernameToken = exports.verifyUsername = exports.changeEmailToken = exports.changeEmail = exports.verifyEmailToken = exports.verifyEmail = exports.changePasswordToken = exports.changePassword = exports.resetPasswordToken = exports.resetPassword = exports.forgotPassword = exports.checkSession = exports.logoutUser = exports.registerUser = exports.loginUser = exports.deleteUser = exports.updateUser = exports.addUser = exports.getUser = exports.getUsers = exports.authenticateUser = exports.checkIfAdmin = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_1 = require("../../models/user");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -64,6 +64,51 @@ var EBackToTheApp;
     EBackToTheApp["pt"] = "Voltar para o aplicativo";
     EBackToTheApp["cs"] = "Zp\u011Bt do aplikace";
 })(EBackToTheApp || (EBackToTheApp = {}));
+var EErrorCreatingToken;
+(function (EErrorCreatingToken) {
+    EErrorCreatingToken["en"] = "Error creating token";
+    EErrorCreatingToken["es"] = "Error al crear el token";
+    EErrorCreatingToken["fr"] = "Erreur lors de la cr\u00E9ation du jeton";
+    EErrorCreatingToken["de"] = "Fehler beim Erstellen des Tokens";
+    EErrorCreatingToken["pt"] = "Erro ao criar token";
+    EErrorCreatingToken["cs"] = "Chyba p\u0159i vytv\u00E1\u0159en\u00ED tokenu";
+})(EErrorCreatingToken || (EErrorCreatingToken = {}));
+var EHelloWelcome;
+(function (EHelloWelcome) {
+    EHelloWelcome["en"] = "Hello, welcome to the Comedian's Companion";
+    EHelloWelcome["es"] = "Hola, bienvenido al Compa\u00F1ero del Comediante";
+    EHelloWelcome["fr"] = "Bonjour, bienvenue au Compagnon du Com\u00E9dien";
+    EHelloWelcome["de"] = "Hallo, willkommen beim Begleiter des Komikers";
+    EHelloWelcome["pt"] = "Ol\u00E1, bem-vindo ao Companheiro do Comediante";
+    EHelloWelcome["cs"] = "Ahoj, v\u00EDtejte u Spole\u010Dn\u00EDka komika";
+})(EHelloWelcome || (EHelloWelcome = {}));
+var EEmailMessage;
+(function (EEmailMessage) {
+    EEmailMessage["en"] = "Please verify your email";
+    EEmailMessage["es"] = "Por favor verifica tu correo electr\u00F3nico";
+    EEmailMessage["fr"] = "Veuillez v\u00E9rifier votre email";
+    EEmailMessage["de"] = "Bitte \u00FCberpr\u00FCfen Sie Ihre E-Mail";
+    EEmailMessage["pt"] = "Por favor, verifique seu email";
+    EEmailMessage["cs"] = "Pros\u00EDm, ov\u011B\u0159te sv\u016Fj email";
+})(EEmailMessage || (EEmailMessage = {}));
+var EErrorSendingMail;
+(function (EErrorSendingMail) {
+    EErrorSendingMail["en"] = "Error sending mail";
+    EErrorSendingMail["es"] = "Error al enviar el correo";
+    EErrorSendingMail["fr"] = "Erreur lors de l envoi du mail";
+    EErrorSendingMail["de"] = "Fehler beim Senden der E-Mail";
+    EErrorSendingMail["pt"] = "Erro ao enviar email";
+    EErrorSendingMail["cs"] = "Chyba p\u0159i odes\u00EDl\u00E1n\u00ED emailu";
+})(EErrorSendingMail || (EErrorSendingMail = {}));
+var ETokenSent;
+(function (ETokenSent) {
+    ETokenSent["en"] = "Token sent";
+    ETokenSent["es"] = "Token enviado";
+    ETokenSent["fr"] = "Jeton envoy\u00E9";
+    ETokenSent["de"] = "Token gesendet";
+    ETokenSent["pt"] = "Token enviado";
+    ETokenSent["cs"] = "Token odesl\u00E1n";
+})(ETokenSent || (ETokenSent = {}));
 const generateToken = (userId) => {
     if (!userId)
         return undefined;
@@ -73,9 +118,26 @@ const generateToken = (userId) => {
     return jsonwebtoken_1.default.sign(payload, secret, options);
 };
 exports.generateToken = generateToken;
+// const verifyToken = (token: string): ITokenPayload => {
+//   const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+//   return jwt.verify(token, secret) as ITokenPayload
+// }
 const verifyToken = (token) => {
     const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf';
-    return jsonwebtoken_1.default.verify(token, secret);
+    try {
+        if (token)
+            return jsonwebtoken_1.default.verify(token, secret);
+        else
+            return undefined;
+    }
+    catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            throw new Error('Token expired');
+        }
+        else {
+            throw error; // Re-throw other errors
+        }
+    }
 };
 exports.verifyToken = verifyToken;
 const verifyTokenMiddleware = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -85,7 +147,7 @@ const verifyTokenMiddleware = (req, res) => __awaiter(void 0, void 0, void 0, fu
         if (!token)
             throw new Error('No token provided');
         const decoded = verifyToken(token);
-        const user = yield user_1.User.findById(decoded.userId);
+        const user = yield user_1.User.findById(decoded === null || decoded === void 0 ? void 0 : decoded.userId);
         if (!user)
             throw new Error('User not found');
         res.status(200).json({ message: 'Token verified' });
@@ -116,7 +178,7 @@ const authenticateUser = (req, res, next) => __awaiter(void 0, void 0, void 0, f
         if (!token)
             throw new Error('No token provided');
         const decoded = verifyToken(token);
-        const user = yield user_1.User.findById(decoded.userId);
+        const user = yield user_1.User.findById(decoded === null || decoded === void 0 ? void 0 : decoded.userId);
         if (!user)
             throw new Error('User not authenticated');
         // Attach user information to the request object
@@ -239,33 +301,104 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 return false;
             }
         });
-    }; //
-    try {
-        const { username, password } = req.body;
-        const user = yield user_1.User.findOne({ username });
-        if (!user) {
-            res.status(401).json({ message: 'Invalid login credentials-' });
-        }
-        else if (!user.verified) {
-            res.status(401).json({ message: 'User not verified. Please check your email' });
+    };
+    let EInvalidLoginCredentials;
+    (function (EInvalidLoginCredentials) {
+        EInvalidLoginCredentials["en"] = "Invalid login credentials";
+        EInvalidLoginCredentials["es"] = "Credenciales de inicio de sesi\u00F3n no v\u00E1lidas";
+        EInvalidLoginCredentials["fr"] = "Informations de connexion invalides";
+        EInvalidLoginCredentials["de"] = "Ung\u00FCltige Anmeldeinformationen";
+        EInvalidLoginCredentials["pt"] = "Credenciais de login inv\u00E1lidas";
+        EInvalidLoginCredentials["cs"] = "Neplatn\u00E9 p\u0159ihla\u0161ovac\u00ED \u00FAdaje";
+    })(EInvalidLoginCredentials || (EInvalidLoginCredentials = {}));
+    const { username, password, language } = req.body;
+    const user = yield user_1.User.findOne({ username });
+    if (!user) {
+        res.status(401).json({
+            message: `${EInvalidLoginCredentials[language]}` ||
+                'Invalid login credentials - ',
+        });
+    }
+    else if (user === null || user === void 0 ? void 0 : user.verified) {
+        const passwordMatch = yield comparePassword.call(user, password);
+        console.log('passwordMatch', passwordMatch);
+        if (passwordMatch) {
+            const token = generateToken(user._id);
+            console.log('token, SUCCESS ', token);
+            res
+                .status(200)
+                .json({ success: true, message: 'Successfully logged in', user, token });
         }
         else {
-            const passwordMatch = yield comparePassword.call(user, password);
-            if (passwordMatch) {
-                const token = generateToken(user._id);
-                res.status(200).json({ message: 'Successfully logged in', user, token });
-            }
-            else {
-                res.status(401).json({ message: 'Invalid login credentials' });
-            }
+            res.status(401).json({ success: false, message: 'Invalid login credentials' });
         }
     }
-    catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
+    else if (!(user === null || user === void 0 ? void 0 : user.verified) && !(user === null || user === void 0 ? void 0 : user.token)) {
+        try {
+            const refresh = yield refreshExpiredToken(req, user._id);
+            console.log('refresh 0', refresh);
+            if (refresh === null || refresh === void 0 ? void 0 : refresh.success) {
+                console.log(refresh === null || refresh === void 0 ? void 0 : refresh.message);
+                res.status(401).json({ success: false, message: refresh.message, user });
+                // res
+                //   .status(401)
+                //   .json({ success: false, message: 'User not verified. Please check your email ¤' })
+            }
+            else {
+                console.log(refresh === null || refresh === void 0 ? void 0 : refresh.message);
+                res.status(401).json({ success: false, message: refresh === null || refresh === void 0 ? void 0 : refresh.message });
+            }
+        }
+        catch (error) {
+            console.error(error);
+            res.status(500).json({ message: EError[req.body.language || 'en'] });
+        }
+    }
+    else if ((user === null || user === void 0 ? void 0 : user.token) && !(user === null || user === void 0 ? void 0 : user.verified)) {
+        const decoded = verifyToken(user.token);
+        if ((decoded === null || decoded === void 0 ? void 0 : decoded.exp) && (decoded === null || decoded === void 0 ? void 0 : decoded.exp) < Date.now() / 1000) {
+            try {
+                //generate new token
+                const refresh = yield refreshExpiredToken(req, user._id);
+                console.log('refresh 1', refresh);
+                if (refresh === null || refresh === void 0 ? void 0 : refresh.success) {
+                    console.log(refresh === null || refresh === void 0 ? void 0 : refresh.message);
+                    res
+                        .status(401)
+                        .json({ success: false, message: refresh.message, user, token: user.token });
+                }
+                else {
+                    console.log(refresh === null || refresh === void 0 ? void 0 : refresh.message);
+                    res.status(401).json({ success: false, message: refresh === null || refresh === void 0 ? void 0 : refresh.message });
+                }
+            }
+            catch (error) {
+                console.error(error);
+                res
+                    .status(500)
+                    .json({ message: EError[req.body.language || 'en'] });
+            }
+        }
+        else if (!user.verified) {
+            //generate new token
+            const refresh = yield refreshExpiredToken(req, user._id);
+            console.log('refresh 1', refresh);
+            if (refresh === null || refresh === void 0 ? void 0 : refresh.success) {
+                console.log(refresh === null || refresh === void 0 ? void 0 : refresh.message);
+                res
+                    .status(401)
+                    .json({ success: false, message: refresh.message, user, token: user.token });
+            }
+            else {
+                console.log(refresh === null || refresh === void 0 ? void 0 : refresh.message);
+                res.status(401).json({ success: false, message: refresh === null || refresh === void 0 ? void 0 : refresh.message });
+            }
+            // res.status(401).json({ message: 'User not verified. Please check your email' })
+        }
     }
 });
 exports.loginUser = loginUser;
+// }
 // const loginUser = async (req: Request, res: Response): Promise<void> => {
 //   const comparePassword = async function (
 //     this: IUser,
@@ -299,27 +432,33 @@ exports.loginUser = loginUser;
 //     res.status(500).json({ message: EError[(req.body.language as ELanguage) || 'en'] })
 //   }
 // }
+const sendMail = (username, language, link) => {
+    console.log(language);
+    console.log(link);
+    return new Promise((resolve, reject) => {
+        transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: username,
+            subject: EHelloWelcome[language] || 'Welcome',
+            text: EEmailMessage[language] + ': ' + link ||
+                'Please verify your email ' + ': ' + link,
+        }, (error, info) => {
+            if (error) {
+                console.log(error);
+                reject(error);
+                return error;
+            }
+            else {
+                console.log('Email sent: ' + info.response);
+                resolve(info.response);
+                return info.response;
+            }
+        });
+    });
+};
 const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //User.collection.dropIndex('jokes_1')
     // try {
-    let EHelloWelcome;
-    (function (EHelloWelcome) {
-        EHelloWelcome["en"] = "Hello, welcome to the Comedian's Companion";
-        EHelloWelcome["es"] = "Hola, bienvenido al Compa\u00F1ero del Comediante";
-        EHelloWelcome["fr"] = "Bonjour, bienvenue au Compagnon du Com\u00E9dien";
-        EHelloWelcome["de"] = "Hallo, willkommen beim Begleiter des Komikers";
-        EHelloWelcome["pt"] = "Ol\u00E1, bem-vindo ao Companheiro do Comediante";
-        EHelloWelcome["cs"] = "Ahoj, v\u00EDtejte u Spole\u010Dn\u00EDka komika";
-    })(EHelloWelcome || (EHelloWelcome = {}));
-    let EEmailMessage;
-    (function (EEmailMessage) {
-        EEmailMessage["en"] = "Please verify your email";
-        EEmailMessage["es"] = "Por favor verifica tu correo electr\u00F3nico";
-        EEmailMessage["fr"] = "Veuillez v\u00E9rifier votre email";
-        EEmailMessage["de"] = "Bitte \u00FCberpr\u00FCfen Sie Ihre E-Mail";
-        EEmailMessage["pt"] = "Por favor, verifique seu email";
-        EEmailMessage["cs"] = "Pros\u00EDm, ov\u011B\u0159te sv\u016Fj email";
-    })(EEmailMessage || (EEmailMessage = {}));
     let EMessage;
     (function (EMessage) {
         EMessage["en"] = "User registered. Please check your email for the verification link";
@@ -329,15 +468,6 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         EMessage["pt"] = "Usu\u00E1rio registrado. Por favor, verifique seu email para o link de verifica\u00E7\u00E3o";
         EMessage["cs"] = "U\u017Eivatel registrov\u00E1n. Pros\u00EDm, zkontrolujte sv\u016Fj email pro ov\u011B\u0159ovac\u00ED odkaz";
     })(EMessage || (EMessage = {}));
-    let EErrorSendingMail;
-    (function (EErrorSendingMail) {
-        EErrorSendingMail["en"] = "Error sending mail";
-        EErrorSendingMail["es"] = "Error al enviar el correo";
-        EErrorSendingMail["fr"] = "Erreur lors de l envoi du mail";
-        EErrorSendingMail["de"] = "Fehler beim Senden der E-Mail";
-        EErrorSendingMail["pt"] = "Erro ao enviar email";
-        EErrorSendingMail["cs"] = "Chyba p\u0159i odes\u00EDl\u00E1n\u00ED emailu";
-    })(EErrorSendingMail || (EErrorSendingMail = {}));
     const { username, password, jokes, language } = req.body;
     const saltRounds = 10;
     let ERegistrationFailed;
@@ -358,6 +488,15 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         EErrorCreatingToken["pt"] = "Erro ao criar token";
         EErrorCreatingToken["cs"] = "Chyba p\u0159i vytv\u00E1\u0159en\u00ED tokenu";
     })(EErrorCreatingToken || (EErrorCreatingToken = {}));
+    let EPleaseCheckYourEmailIfYouHaveAlreadyRegistered;
+    (function (EPleaseCheckYourEmailIfYouHaveAlreadyRegistered) {
+        EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["en"] = "Please check your email if you have already registered";
+        EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["es"] = "Por favor, compruebe su correo electr\u00F3nico si ya se ha registrado";
+        EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["fr"] = "Veuillez v\u00E9rifier votre email si vous \u00EAtes d\u00E9j\u00E0 inscrit";
+        EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["de"] = "Bitte \u00FCberpr\u00FCfen Sie Ihre E-Mail, wenn Sie sich bereits registriert haben";
+        EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["pt"] = "Por favor, verifique seu email se voc\u00EA j\u00E1 se registrou";
+        EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["cs"] = "Zkontrolujte sv\u016Fj email, pokud jste se ji\u017E zaregistrovali";
+    })(EPleaseCheckYourEmailIfYouHaveAlreadyRegistered || (EPleaseCheckYourEmailIfYouHaveAlreadyRegistered = {}));
     try {
         bcrypt_1.default
             .hash(password, saltRounds)
@@ -365,7 +504,8 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             return user_1.User.findOne({ username }).then((user) => {
                 if (user) {
                     res.status(401).json({
-                        message: ERegistrationFailed[user.language] || 'Registration failed',
+                        message: `${ERegistrationFailed[user.language]}. ${EPleaseCheckYourEmailIfYouHaveAlreadyRegistered[user.language]}` ||
+                            'Registration failed, Please check your email if you have already registered',
                     });
                 }
                 else {
@@ -386,32 +526,9 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                         }
                         else {
                             const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`;
+                            console.log('link 2', link);
                             newUser.token = token;
-                            const sendMail = () => {
-                                return new Promise((resolve, reject) => {
-                                    transporter.sendMail({
-                                        from: process.env.EMAIL_USER,
-                                        to: username,
-                                        subject: EHelloWelcome[language] || 'Welcome',
-                                        text: EEmailMessage[language] + link ||
-                                            'Please verify your email' + link,
-                                    }, (error, info) => {
-                                        if (error) {
-                                            console.log(error);
-                                            reject(error);
-                                            res.status(500).json({
-                                                message: EErrorSendingMail[language] ||
-                                                    'Error sending mail',
-                                            });
-                                        }
-                                        else {
-                                            console.log('Email sent: ' + info.response);
-                                            resolve(info.response);
-                                        }
-                                    });
-                                });
-                            };
-                            sendMail()
+                            sendMail(username, language, link)
                                 .then((result) => {
                                 newUser.save().then((user) => {
                                     console.log('resulT', result);
@@ -434,23 +551,266 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 }
             });
         })
-            .catch((error) => {
-            console.error('Error:', error);
-            const language = req.body.language || 'en';
-            res
-                .status(500)
-                .json({ message: EError[language] || 'An error occurred *' });
-        });
+            .catch((error) => __awaiter(void 0, void 0, void 0, function* () {
+            console.error(error);
+            if (error.message === 'Token expired') {
+                const user = yield user_1.User.findOne({ username });
+                const refresh = yield refreshExpiredToken(req, user === null || user === void 0 ? void 0 : user._id);
+                res.status(401).json({ success: false, message: refresh === null || refresh === void 0 ? void 0 : refresh.message });
+            }
+            else {
+                const language = req.body.language || 'en';
+                res
+                    .status(500)
+                    .json({ message: EError[language] || 'An error occurred *' });
+            }
+        }));
     }
     catch (error) {
         console.error('Error:', error);
-        const language = req.body.language || 'en';
-        res
-            .status(500)
-            .json({ message: EError[language] || 'An error occurred ¤' });
+        console.error('Error:', error);
+        if (error.message === 'Token expired') {
+            const user = yield user_1.User.findOne({ username });
+            const refresh = yield refreshExpiredToken(req, user === null || user === void 0 ? void 0 : user._id);
+            if (refresh === null || refresh === void 0 ? void 0 : refresh.success) {
+                res.status(401).json({ success: true, message: refresh.message });
+            }
+            else {
+                res.status(401).json({ success: false, message: refresh === null || refresh === void 0 ? void 0 : refresh.message });
+            }
+        }
+        else {
+            const language = req.body.language || 'en';
+            res
+                .status(500)
+                .json({ message: EError[language] || 'An error occurred ¤' });
+        }
     }
 });
 exports.registerUser = registerUser;
+const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, function* () {
+    const body = req.body;
+    const getUserById_ = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+        const user = yield user_1.User.findById(userId);
+        if (user)
+            return user;
+        else
+            return undefined;
+    });
+    let ENewTokenSentToEmail;
+    (function (ENewTokenSentToEmail) {
+        ENewTokenSentToEmail["en"] = "New token sent to email";
+        ENewTokenSentToEmail["es"] = "Nuevo token enviado al correo electr\u00F3nico";
+        ENewTokenSentToEmail["fr"] = "Nouveau jeton envoy\u00E9 par email";
+        ENewTokenSentToEmail["de"] = "Neuer Token an E-Mail gesendet";
+        ENewTokenSentToEmail["pt"] = "Novo token enviado para o email";
+        ENewTokenSentToEmail["cs"] = "Nov\u00FD token odesl\u00E1n na email";
+    })(ENewTokenSentToEmail || (ENewTokenSentToEmail = {}));
+    let EUserNotVerified;
+    (function (EUserNotVerified) {
+        EUserNotVerified["en"] = "User not verified. Please check your email";
+        EUserNotVerified["es"] = "Usuario no verificado. Por favor, compruebe su correo electr\u00F3nico";
+        EUserNotVerified["fr"] = "Utilisateur non v\u00E9rifi\u00E9. Veuillez v\u00E9rifier votre email";
+        EUserNotVerified["de"] = "Benutzer nicht verifiziert. Bitte \u00FCberpr\u00FCfen Sie Ihre E-Mail";
+        EUserNotVerified["pt"] = "Usu\u00E1rio n\u00E3o verificado. Por favor, verifique seu email";
+        EUserNotVerified["cs"] = "U\u017Eivatel nen\u00ED ov\u011B\u0159en. Zkontrolujte sv\u016Fj email";
+    })(EUserNotVerified || (EUserNotVerified = {}));
+    return new Promise((resolve, reject) => {
+        var _a;
+        try {
+            let token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(' ')[1];
+            if (!token) {
+                getUserById_(_id)
+                    .then((user) => {
+                    if (user === null || user === void 0 ? void 0 : user.token) {
+                        token = user.token;
+                    }
+                    else {
+                        token = generateToken(_id);
+                        if (!(user === null || user === void 0 ? void 0 : user.verified)) {
+                            const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`;
+                            console.log('link 3', link);
+                            sendMail(body.username, body.language, link)
+                                .then((r) => {
+                                reject({
+                                    success: false,
+                                    message: `${EEmailMessage[body.language]} *,
+                        ${ENewTokenSentToEmail[body.language]}` || 'Token sent',
+                                    user,
+                                });
+                            })
+                                .catch((error) => {
+                                console.error(error);
+                                reject({
+                                    success: false,
+                                    message: EErrorSendingMail[req.body.language] ||
+                                        'Error sending mail ¤',
+                                });
+                            });
+                        }
+                        // reject(new Error('No token provided'))
+                        // return
+                    }
+                })
+                    .catch((error) => {
+                    console.error(error);
+                    reject({
+                        success: false,
+                        message: EError[req.body.language || 'en'] || '¤ Error',
+                    });
+                });
+            }
+            else {
+                // Verify the expired token and get the user ID
+                const decoded = verifyToken(token);
+                // Create a new token for the user
+                const newToken = generateToken(decoded === null || decoded === void 0 ? void 0 : decoded.userId);
+                // Send the new token back to the client
+                //resolve({ success: true, message: 'Token refreshed successfully', newToken })
+                // Save the new token to the user
+                getUserById_(decoded === null || decoded === void 0 ? void 0 : decoded.userId)
+                    .then((user) => {
+                    if (!user) {
+                        reject(new Error(`${EErrorCreatingToken[body.language]} *`));
+                        return;
+                    }
+                    const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf';
+                    jsonwebtoken_1.default.sign({ userId: user._id }, secret, { expiresIn: '1d' }, (err, token) => {
+                        if (err) {
+                            console.error(err);
+                            reject({
+                                success: false,
+                                message: EErrorCreatingToken[req.body.language] ||
+                                    'Error creating token',
+                            });
+                        }
+                        else {
+                            user.token = token;
+                            const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${req.body.language}`;
+                            console.log('link 1', link);
+                            user
+                                .save()
+                                .then(() => {
+                                sendMail(user.username, body.language, link);
+                            })
+                                .then((r) => {
+                                resolve({
+                                    success: true,
+                                    message: ` ${EUserNotVerified[req.body.language]}. ${ENewTokenSentToEmail[body.language]}` || 'New link sent to email',
+                                    user,
+                                });
+                            })
+                                .catch((error) => {
+                                console.error(error);
+                                reject({
+                                    success: false,
+                                    message: EErrorSendingMail[req.body.language] ||
+                                        'Error sending mail ¤',
+                                });
+                            });
+                        }
+                    });
+                })
+                    .catch((error) => {
+                    console.error(error);
+                    reject({
+                        success: false,
+                        message: EError[req.body.language || 'en'] || '¤ Error',
+                    });
+                });
+            }
+        }
+        catch (error) {
+            console.error('Error:', error);
+            reject({
+                success: false,
+                message: EError[req.body.language || 'en'],
+            });
+        }
+    });
+});
+exports.refreshExpiredToken = refreshExpiredToken;
+// const refreshExpiredTokenOriginal = async (req: Request) => {
+//   try {
+//     const token = req.headers.authorization?.split(' ')[1] as IToken['token']
+//     if (!token) throw new Error('No token provided')
+//     // Verify the expired token and get the user ID
+//     const decoded = verifyToken(token)
+//     // Create a new token for the user
+//     const newToken = generateToken(decoded?.userId)
+//     // // Send the new token back to the client
+//     //return { success: true, message: 'Token refreshed successfully', newToken }
+//     const body = req.body as Pick<IUser, 'username' | 'language'>
+//     const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+//     const user = await User.findOne({ username: body.username })
+//     if (!user) {
+//       return { success: false, message: `${EErrorCreatingToken[body.language]} *` }
+//     } else {
+//       // try {
+//       jwt.sign({ userId: user?._id }, secret, { expiresIn: '1d' }, (err, token) => {
+//         if (err) {
+//           console.error(err)
+//           return {
+//             success: false,
+//             message: EErrorCreatingToken[body.language] || 'Error creating token',
+//           }
+//         } else {
+//           user.token = token
+//           const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`
+//           user
+//             .save()
+//             .then(() =>
+//               sendMail(body.username, body.language as unknown as ELanguage, link)
+//             )
+//             .then((r) => {
+//               console.log('Ärrä', r)
+//               return {
+//                 success: true,
+//                 message: ETokenSent[body.language] || 'Token sent',
+//                 user,
+//               }
+//             })
+//             .catch((error) => {
+//               console.log(error)
+//               return {
+//                 success: false,
+//                 message: EErrorSendingMail[body.language] || 'Error sending mail ¤',
+//               }
+//             })
+//         }
+//       })
+//       // } catch (error) {
+//       //   console.error('Error:', error)
+//       //   return {
+//       //     success: false,
+//       //     message: EError[(req.body.language as ELanguage) || 'en'] || '¤ Error',
+//       //   }
+//       // }
+//     }
+//   } catch (error) {
+//     console.error('Error:', error)
+//     return {
+//       success: false,
+//       message:
+//         EError[(req.body.language as ELanguage) || 'en'] || 'Error refreshing token',
+//     }
+//   }
+// }
+const requestNewToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!req.body.username) {
+        res.status(400).json({ message: 'Username required' });
+        return;
+    }
+    const username = req.body.username;
+    const user = yield user_1.User.findOne({ username });
+    if (!user) {
+        res.status(404).json({ message: 'User not found' });
+        return;
+    }
+    const token = generateToken(user._id);
+    res.json({ token });
+});
+exports.requestNewToken = requestNewToken;
 // const hashedPassword = await bcrypt.hash(password, saltRounds)
 //     const user: IUser | null = await User.findOne({ username })
 //     if (user) {

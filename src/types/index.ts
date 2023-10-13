@@ -80,9 +80,11 @@ export interface IJokeTwoPart extends IJokeCommonFields {
 export type IJoke = IJokeSingle | IJokeTwoPart
 
 export interface ITokenPayload {
-  userId: string
+  userId: string | undefined
+  iat?: number
+  exp?: number
 }
 export interface IToken {
-  token: string
+  token: string | undefined
   createdAt: Date
 }

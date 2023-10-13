@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt'
 import { IUser } from '../../types'
 import { User } from '../../models/user'
 import { ITokenPayload, IToken } from '../../types'
-import jwt, { Secret } from 'jsonwebtoken'
+import jwt, { JwtPayload, Secret } from 'jsonwebtoken'
 const dotenv = require('dotenv')
 dotenv.config()
 
@@ -51,6 +51,46 @@ enum EBackToTheApp {
   pt = 'Voltar para o aplicativo',
   cs = 'Zpět do aplikace',
 }
+enum EErrorCreatingToken {
+  en = 'Error creating token',
+  es = 'Error al crear el token',
+  fr = 'Erreur lors de la création du jeton',
+  de = 'Fehler beim Erstellen des Tokens',
+  pt = 'Erro ao criar token',
+  cs = 'Chyba při vytváření tokenu',
+}
+enum EHelloWelcome {
+  en = "Hello, welcome to the Comedian's Companion",
+  es = 'Hola, bienvenido al Compañero del Comediante',
+  fr = 'Bonjour, bienvenue au Compagnon du Comédien',
+  de = 'Hallo, willkommen beim Begleiter des Komikers',
+  pt = 'Olá, bem-vindo ao Companheiro do Comediante',
+  cs = 'Ahoj, vítejte u Společníka komika',
+}
+enum EEmailMessage {
+  en = 'Please verify your email',
+  es = 'Por favor verifica tu correo electrónico',
+  fr = 'Veuillez vérifier votre email',
+  de = 'Bitte überprüfen Sie Ihre E-Mail',
+  pt = 'Por favor, verifique seu email',
+  cs = 'Prosím, ověřte svůj email',
+}
+enum EErrorSendingMail {
+  en = 'Error sending mail',
+  es = 'Error al enviar el correo',
+  fr = 'Erreur lors de l envoi du mail',
+  de = 'Fehler beim Senden der E-Mail',
+  pt = 'Erro ao enviar email',
+  cs = 'Chyba při odesílání emailu',
+}
+enum ETokenSent {
+  en = 'Token sent',
+  es = 'Token enviado',
+  fr = 'Jeton envoyé',
+  de = 'Token gesendet',
+  pt = 'Token enviado',
+  cs = 'Token odeslán',
+}
 
 const generateToken = (userId: string | undefined): string | undefined => {
   if (!userId) return undefined
@@ -60,9 +100,23 @@ const generateToken = (userId: string | undefined): string | undefined => {
   return jwt.sign(payload, secret, options) as IToken['token']
 }
 
-const verifyToken = (token: string): ITokenPayload => {
+// const verifyToken = (token: string): ITokenPayload => {
+//   const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+//   return jwt.verify(token, secret) as ITokenPayload
+// }
+
+const verifyToken = (token: string | undefined) => {
   const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
-  return jwt.verify(token, secret) as ITokenPayload
+  try {
+    if (token) return jwt.verify(token, secret) as JwtPayload
+    else return undefined
+  } catch (error) {
+    if ((error as Error).name === 'TokenExpiredError') {
+      throw new Error('Token expired')
+    } else {
+      throw error // Re-throw other errors
+    }
+  }
 }
 
 const verifyTokenMiddleware = async (req: Request, res: Response): Promise<void> => {
@@ -70,7 +124,7 @@ const verifyTokenMiddleware = async (req: Request, res: Response): Promise<void>
     const token = req.headers.authorization?.split(' ')[1] as IToken['token']
     if (!token) throw new Error('No token provided')
     const decoded = verifyToken(token)
-    const user: IUser | null = await User.findById(decoded.userId)
+    const user: IUser | null = await User.findById(decoded?.userId)
     if (!user) throw new Error('User not found')
     res.status(200).json({ message: 'Token verified' })
   } catch (error) {
@@ -101,7 +155,7 @@ const authenticateUser = async (
     if (!token) throw new Error('No token provided')
 
     const decoded = verifyToken(token)
-    const user: IUser | null = await User.findById(decoded.userId)
+    const user: IUser | null = await User.findById(decoded?.userId)
 
     if (!user) throw new Error('User not authenticated')
 
@@ -235,31 +289,95 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
       console.error('Error:', error)
       return false
     }
-  } //
+  }
+  enum EInvalidLoginCredentials {
+    en = 'Invalid login credentials',
+    es = 'Credenciales de inicio de sesión no válidas',
+    fr = 'Informations de connexion invalides',
+    de = 'Ungültige Anmeldeinformationen',
+    pt = 'Credenciais de login inválidas',
+    cs = 'Neplatné přihlašovací údaje',
+  }
+  const { username, password, language } = req.body
+  const user: IUser | null = await User.findOne({ username })
 
-  try {
-    const { username, password } = req.body
-    const user: IUser | null = await User.findOne({ username })
-
-    if (!user) {
-      res.status(401).json({ message: 'Invalid login credentials-' })
-    } else if (!user.verified) {
-      res.status(401).json({ message: 'User not verified. Please check your email' })
+  if (!user) {
+    res.status(401).json({
+      message:
+        `${EInvalidLoginCredentials[language as ELanguage]}` ||
+        'Invalid login credentials - ',
+    })
+  } else if (user?.verified) {
+    const passwordMatch: boolean = await comparePassword.call(user, password)
+    console.log('passwordMatch', passwordMatch)
+    if (passwordMatch) {
+      const token = generateToken(user._id)
+      console.log('token, SUCCESS ', token)
+      res
+        .status(200)
+        .json({ success: true, message: 'Successfully logged in', user, token })
     } else {
-      const passwordMatch: boolean = await comparePassword.call(user, password)
-
-      if (passwordMatch) {
-        const token = generateToken(user._id)
-        res.status(200).json({ message: 'Successfully logged in', user, token })
-      } else {
-        res.status(401).json({ message: 'Invalid login credentials' })
-      }
+      res.status(401).json({ success: false, message: 'Invalid login credentials' })
     }
-  } catch (error) {
-    console.error('Error:', error)
-    res.status(500).json({ message: EError[(req.body.language as ELanguage) || 'en'] })
+  } else if (!user?.verified && !user?.token) {
+    try {
+      const refresh = await refreshExpiredToken(req, user._id)
+      console.log('refresh 0', refresh)
+      if (refresh?.success) {
+        console.log(refresh?.message)
+        res.status(401).json({ success: false, message: refresh.message, user })
+        // res
+        //   .status(401)
+        //   .json({ success: false, message: 'User not verified. Please check your email ¤' })
+      } else {
+        console.log(refresh?.message)
+        res.status(401).json({ success: false, message: refresh?.message })
+      }
+    } catch (error) {
+      console.error(error)
+      res.status(500).json({ message: EError[(req.body.language as ELanguage) || 'en'] })
+    }
+  } else if (user?.token && !user?.verified) {
+    const decoded = verifyToken(user.token)
+    if (decoded?.exp && decoded?.exp < Date.now() / 1000) {
+      try {
+        //generate new token
+        const refresh = await refreshExpiredToken(req, user._id)
+        console.log('refresh 1', refresh)
+        if (refresh?.success) {
+          console.log(refresh?.message)
+          res
+            .status(401)
+            .json({ success: false, message: refresh.message, user, token: user.token })
+        } else {
+          console.log(refresh?.message)
+          res.status(401).json({ success: false, message: refresh?.message })
+        }
+      } catch (error) {
+        console.error(error)
+        res
+          .status(500)
+          .json({ message: EError[(req.body.language as ELanguage) || 'en'] })
+      }
+    } else if (!user.verified) {
+      //generate new token
+      const refresh = await refreshExpiredToken(req, user._id)
+      console.log('refresh 1', refresh)
+      if (refresh?.success) {
+        console.log(refresh?.message)
+        res
+          .status(401)
+          .json({ success: false, message: refresh.message, user, token: user.token })
+      } else {
+        console.log(refresh?.message)
+        res.status(401).json({ success: false, message: refresh?.message })
+      }
+      // res.status(401).json({ message: 'User not verified. Please check your email' })
+    }
   }
 }
+
+// }
 
 // const loginUser = async (req: Request, res: Response): Promise<void> => {
 //   const comparePassword = async function (
@@ -295,25 +413,38 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
 //   }
 // }
 
+const sendMail = (username: IUser['username'], language: ELanguage, link: string) => {
+  console.log(language)
+  console.log(link)
+  return new Promise((resolve, reject) => {
+    transporter.sendMail(
+      {
+        from: process.env.EMAIL_USER,
+        to: username,
+        subject: EHelloWelcome[language as ELanguage] || 'Welcome',
+        text:
+          EEmailMessage[language as ELanguage] + ': ' + link ||
+          'Please verify your email ' + ': ' + link,
+      },
+      (error: Error, info: { response: unknown }) => {
+        if (error) {
+          console.log(error)
+          reject(error)
+          return error
+        } else {
+          console.log('Email sent: ' + info.response)
+          resolve(info.response)
+          return info.response
+        }
+      }
+    )
+  })
+}
+
 const registerUser = async (req: Request, res: Response): Promise<void> => {
   //User.collection.dropIndex('jokes_1')
   // try {
-  enum EHelloWelcome {
-    en = "Hello, welcome to the Comedian's Companion",
-    es = 'Hola, bienvenido al Compañero del Comediante',
-    fr = 'Bonjour, bienvenue au Compagnon du Comédien',
-    de = 'Hallo, willkommen beim Begleiter des Komikers',
-    pt = 'Olá, bem-vindo ao Companheiro do Comediante',
-    cs = 'Ahoj, vítejte u Společníka komika',
-  }
-  enum EEmailMessage {
-    en = 'Please verify your email',
-    es = 'Por favor verifica tu correo electrónico',
-    fr = 'Veuillez vérifier votre email',
-    de = 'Bitte überprüfen Sie Ihre E-Mail',
-    pt = 'Por favor, verifique seu email',
-    cs = 'Prosím, ověřte svůj email',
-  }
+
   enum EMessage {
     en = 'User registered. Please check your email for the verification link',
     es = 'Usuario registrado. Por favor, compruebe su correo electrónico para el enlace de verificación',
@@ -321,14 +452,6 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
     de = 'Benutzer registriert. Bitte überprüfen Sie Ihre E-Mail für den Bestätigungslink',
     pt = 'Usuário registrado. Por favor, verifique seu email para o link de verificação',
     cs = 'Uživatel registrován. Prosím, zkontrolujte svůj email pro ověřovací odkaz',
-  }
-  enum EErrorSendingMail {
-    en = 'Error sending mail',
-    es = 'Error al enviar el correo',
-    fr = 'Erreur lors de l envoi du mail',
-    de = 'Fehler beim Senden der E-Mail',
-    pt = 'Erro ao enviar email',
-    cs = 'Chyba při odesílání emailu',
   }
 
   const { username, password, jokes, language } = req.body
@@ -350,6 +473,14 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
     pt = 'Erro ao criar token',
     cs = 'Chyba při vytváření tokenu',
   }
+  enum EPleaseCheckYourEmailIfYouHaveAlreadyRegistered {
+    en = 'Please check your email if you have already registered',
+    es = 'Por favor, compruebe su correo electrónico si ya se ha registrado',
+    fr = 'Veuillez vérifier votre email si vous êtes déjà inscrit',
+    de = 'Bitte überprüfen Sie Ihre E-Mail, wenn Sie sich bereits registriert haben',
+    pt = 'Por favor, verifique seu email se você já se registrou',
+    cs = 'Zkontrolujte svůj email, pokud jste se již zaregistrovali',
+  }
   try {
     bcrypt
       .hash(password, saltRounds)
@@ -357,7 +488,11 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
         return User.findOne({ username }).then((user) => {
           if (user) {
             res.status(401).json({
-              message: ERegistrationFailed[user.language] || 'Registration failed',
+              message:
+                `${ERegistrationFailed[user.language]}. ${
+                  EPleaseCheckYourEmailIfYouHaveAlreadyRegistered[user.language]
+                }` ||
+                'Registration failed, Please check your email if you have already registered',
             })
           } else {
             const newUser = new User({
@@ -383,38 +518,10 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
                   })
                 } else {
                   const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`
+                  console.log('link 2', link)
                   newUser.token = token
 
-                  const sendMail = () => {
-                    return new Promise((resolve, reject) => {
-                      transporter.sendMail(
-                        {
-                          from: process.env.EMAIL_USER,
-                          to: username,
-                          subject: EHelloWelcome[language as ELanguage] || 'Welcome',
-                          text:
-                            EEmailMessage[language as ELanguage] + link ||
-                            'Please verify your email' + link,
-                        },
-                        (error: any, info: { response: unknown }) => {
-                          if (error) {
-                            console.log(error)
-                            reject(error)
-                            res.status(500).json({
-                              message:
-                                EErrorSendingMail[language as ELanguage] ||
-                                'Error sending mail',
-                            })
-                          } else {
-                            console.log('Email sent: ' + info.response)
-                            resolve(info.response)
-                          }
-                        }
-                      )
-                    })
-                  }
-
-                  sendMail()
+                  sendMail(username, language, link)
                     .then((result) => {
                       newUser.save().then((user: IUser) => {
                         console.log('resulT', result)
@@ -439,21 +546,323 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
           }
         })
       })
-      .catch((error) => {
-        console.error('Error:', error)
-        const language = req.body.language || 'en'
-        res
-          .status(500)
-          .json({ message: EError[language as ELanguage] || 'An error occurred *' })
+      .catch(async (error) => {
+        console.error(error)
+        if (error.message === 'Token expired') {
+          const user = await User.findOne({ username })
+          const refresh = await refreshExpiredToken(req, user?._id)
+          res.status(401).json({ success: false, message: refresh?.message })
+        } else {
+          const language = req.body.language || 'en'
+          res
+            .status(500)
+            .json({ message: EError[language as ELanguage] || 'An error occurred *' })
+        }
       })
   } catch (error) {
     console.error('Error:', error)
-    const language = req.body.language || 'en'
-    res
-      .status(500)
-      .json({ message: EError[language as ELanguage] || 'An error occurred ¤' })
+    console.error('Error:', error)
+    if ((error as Error).message === 'Token expired') {
+      const user = await User.findOne({ username })
+      const refresh = await refreshExpiredToken(req, user?._id)
+      if (refresh?.success) {
+        res.status(401).json({ success: true, message: refresh.message })
+      } else {
+        res.status(401).json({ success: false, message: refresh?.message })
+      }
+    } else {
+      const language = req.body.language || 'en'
+      res
+        .status(500)
+        .json({ message: EError[language as ELanguage] || 'An error occurred ¤' })
+    }
   }
 }
+
+// const refreshExpiredToken = async (req: Request, res: Response): Promise<void> => {
+//   try {
+//     const token = req.headers.authorization?.split(' ')[1] as IToken['token']
+//     if (!token) throw new Error('No token provided')
+
+//     // Verify the expired token and get the user ID
+//     const decoded = verifyToken(token)
+
+//     // Create a new token for the user
+//     const newToken = generateToken(decoded?.userId)
+
+//     // Send the new token back to the client
+//     res.status(200).json({ newToken })
+//   } catch (error) {
+//     console.error('Error:', error)
+//     res.status(500).json({ message: EError[(req.body.language as ELanguage) || 'en'] })
+//   }
+// }
+
+type TRefreshExpiredToken = {
+  success: boolean
+  message: string
+  newToken?: string
+  user?: IUser
+}
+
+const refreshExpiredToken = async (
+  req: Request,
+  _id: IUser['_id']
+): Promise<TRefreshExpiredToken> => {
+  const body = req.body as Pick<IUser, 'username' | 'language'>
+
+  const getUserById_ = async (userId: string | undefined): Promise<IUser | undefined> => {
+    const user = await User.findById(userId)
+    if (user) return user
+    else return undefined
+  }
+
+  enum ENewTokenSentToEmail {
+    en = 'New token sent to email',
+    es = 'Nuevo token enviado al correo electrónico',
+    fr = 'Nouveau jeton envoyé par email',
+    de = 'Neuer Token an E-Mail gesendet',
+    pt = 'Novo token enviado para o email',
+    cs = 'Nový token odeslán na email',
+  }
+  enum EUserNotVerified {
+    en = 'User not verified. Please check your email',
+    es = 'Usuario no verificado. Por favor, compruebe su correo electrónico',
+    fr = 'Utilisateur non vérifié. Veuillez vérifier votre email',
+    de = 'Benutzer nicht verifiziert. Bitte überprüfen Sie Ihre E-Mail',
+    pt = 'Usuário não verificado. Por favor, verifique seu email',
+    cs = 'Uživatel není ověřen. Zkontrolujte svůj email',
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      let token = req.headers.authorization?.split(' ')[1] as IToken['token'] as
+        | string
+        | undefined
+      if (!token) {
+        getUserById_(_id)
+          .then((user) => {
+            if (user?.token) {
+              token = user.token
+            } else {
+              token = generateToken(_id)
+              if (!user?.verified) {
+                const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`
+                console.log('link 3', link)
+                sendMail(body.username, body.language as unknown as ELanguage, link)
+                  .then((r) => {
+                    reject({
+                      success: false,
+                      message:
+                        `${EEmailMessage[body.language as keyof typeof EEmailMessage]} *,
+                        ${
+                          ENewTokenSentToEmail[
+                            body.language as keyof typeof ENewTokenSentToEmail
+                          ]
+                        }` || 'Token sent',
+                      user,
+                    })
+                  })
+                  .catch((error) => {
+                    console.error(error)
+                    reject({
+                      success: false,
+                      message:
+                        EErrorSendingMail[req.body.language as ELanguage] ||
+                        'Error sending mail ¤',
+                    })
+                  })
+              }
+              // reject(new Error('No token provided'))
+              // return
+            }
+          })
+          .catch((error) => {
+            console.error(error)
+            reject({
+              success: false,
+              message: EError[(req.body.language as ELanguage) || 'en'] || '¤ Error',
+            })
+          })
+      } else {
+        // Verify the expired token and get the user ID
+        const decoded = verifyToken(token)
+
+        // Create a new token for the user
+        const newToken = generateToken(decoded?.userId)
+
+        // Send the new token back to the client
+        //resolve({ success: true, message: 'Token refreshed successfully', newToken })
+
+        // Save the new token to the user
+        getUserById_(decoded?.userId)
+          .then((user) => {
+            if (!user) {
+              reject(
+                new Error(
+                  `${
+                    EErrorCreatingToken[body.language as keyof typeof EErrorCreatingToken]
+                  } *`
+                )
+              )
+              return
+            }
+
+            const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+            jwt.sign({ userId: user._id }, secret, { expiresIn: '1d' }, (err, token) => {
+              if (err) {
+                console.error(err)
+                reject({
+                  success: false,
+                  message:
+                    EErrorCreatingToken[req.body.language as ELanguage] ||
+                    'Error creating token',
+                })
+              } else {
+                user.token = token
+
+                const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${req.body.language}`
+                console.log('link 1', link)
+                user
+                  .save()
+                  .then(() => {
+                    sendMail(user.username, body.language as unknown as ELanguage, link)
+                  })
+                  .then((r) => {
+                    resolve({
+                      success: true,
+                      message:
+                        ` ${
+                          EUserNotVerified[
+                            req.body.language as keyof typeof EUserNotVerified
+                          ]
+                        }. ${
+                          ENewTokenSentToEmail[
+                            body.language as keyof typeof ENewTokenSentToEmail
+                          ]
+                        }` || 'New link sent to email',
+                      user,
+                    })
+                  })
+                  .catch((error) => {
+                    console.error(error)
+                    reject({
+                      success: false,
+                      message:
+                        EErrorSendingMail[req.body.language as ELanguage] ||
+                        'Error sending mail ¤',
+                    })
+                  })
+              }
+            })
+          })
+          .catch((error) => {
+            console.error(error)
+            reject({
+              success: false,
+              message: EError[(req.body.language as ELanguage) || 'en'] || '¤ Error',
+            })
+          })
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      reject({
+        success: false,
+        message: EError[(req.body.language as ELanguage) || 'en'],
+      })
+    }
+  })
+}
+
+// const refreshExpiredTokenOriginal = async (req: Request) => {
+//   try {
+//     const token = req.headers.authorization?.split(' ')[1] as IToken['token']
+//     if (!token) throw new Error('No token provided')
+
+//     // Verify the expired token and get the user ID
+//     const decoded = verifyToken(token)
+
+//     // Create a new token for the user
+//     const newToken = generateToken(decoded?.userId)
+
+//     // // Send the new token back to the client
+//     //return { success: true, message: 'Token refreshed successfully', newToken }
+
+//     const body = req.body as Pick<IUser, 'username' | 'language'>
+//     const secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
+
+//     const user = await User.findOne({ username: body.username })
+//     if (!user) {
+//       return { success: false, message: `${EErrorCreatingToken[body.language]} *` }
+//     } else {
+//       // try {
+//       jwt.sign({ userId: user?._id }, secret, { expiresIn: '1d' }, (err, token) => {
+//         if (err) {
+//           console.error(err)
+//           return {
+//             success: false,
+//             message: EErrorCreatingToken[body.language] || 'Error creating token',
+//           }
+//         } else {
+//           user.token = token
+
+//           const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`
+
+//           user
+//             .save()
+//             .then(() =>
+//               sendMail(body.username, body.language as unknown as ELanguage, link)
+//             )
+//             .then((r) => {
+//               console.log('Ärrä', r)
+//               return {
+//                 success: true,
+//                 message: ETokenSent[body.language] || 'Token sent',
+//                 user,
+//               }
+//             })
+//             .catch((error) => {
+//               console.log(error)
+//               return {
+//                 success: false,
+//                 message: EErrorSendingMail[body.language] || 'Error sending mail ¤',
+//               }
+//             })
+//         }
+//       })
+//       // } catch (error) {
+//       //   console.error('Error:', error)
+//       //   return {
+//       //     success: false,
+//       //     message: EError[(req.body.language as ELanguage) || 'en'] || '¤ Error',
+//       //   }
+//       // }
+//     }
+//   } catch (error) {
+//     console.error('Error:', error)
+//     return {
+//       success: false,
+//       message:
+//         EError[(req.body.language as ELanguage) || 'en'] || 'Error refreshing token',
+//     }
+//   }
+// }
+
+const requestNewToken = async (req: Request, res: Response): Promise<void> => {
+  if (!req.body.username) {
+    res.status(400).json({ message: 'Username required' })
+    return
+  }
+  const username = req.body.username
+  const user = await User.findOne({ username })
+  if (!user) {
+    res.status(404).json({ message: 'User not found' })
+    return
+  }
+  const token = generateToken(user._id)
+  res.json({ token })
+}
+
 // const hashedPassword = await bcrypt.hash(password, saltRounds)
 //     const user: IUser | null = await User.findOne({ username })
 //     if (user) {
@@ -1016,4 +1425,6 @@ export {
   verifyTokenMiddleware,
   verifyToken,
   findUserByUsername,
+  requestNewToken,
+  refreshExpiredToken,
 }

@@ -4,12 +4,12 @@ const express_1 = require("express");
 const users_1 = require("../controllers/users");
 const jokes_1 = require("../controllers/jokes");
 const router = (0, express_1.Router)();
+router.post('/api/login', users_1.loginUser);
 router.get('/api/users', [users_1.authenticateUser, users_1.checkIfAdmin, users_1.getUsers]);
 router.get('/api/users/:id', users_1.getUser);
 //router.post('/api/users', addUser)
 router.put('/api/users/:id', [users_1.authenticateUser, users_1.updateUser]);
 router.delete('/api/users/:id', [users_1.authenticateUser, users_1.deleteUser]);
-router.post('/api/login', users_1.loginUser);
 router.post('/api/users/register', users_1.registerUser);
 router.get('/api/users/verify/:token', users_1.verifyEmailToken);
 router.get('/api/users/logout', users_1.logoutUser);
@@ -38,6 +38,7 @@ router.get('/api/users/:id/categories/:category/jokes', jokes_1.getJokesByUserAn
 router.get('/api/users/:id/joketypes/:type/jokes', jokes_1.getJokesByUserAndType);
 router.get('/api/users/:id/safe/:safe/jokes', jokes_1.getJokesByUserAndSafe);
 // router.put('/api/users/:id/update-jokes', updateUserJokes)
+//router.put('/api/users/request-new-token', refreshExpiredToken)
 router.get('/api/jokes/:jokeId/:language/:category/:type', jokes_1.findJokeByJokeIdLanguageCategoryType);
 router.post('/api/jokes', jokes_1.addJoke);
 router.put('/api/jokes/:id', jokes_1.updateJoke);

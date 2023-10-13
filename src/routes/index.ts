@@ -32,6 +32,8 @@ import {
   checkIfAdmin,
   authenticateUser,
   //verificationSuccess,
+  requestNewToken,
+  refreshExpiredToken,
 } from '../controllers/users'
 import {
   getJokes,
@@ -49,12 +51,13 @@ import {
 
 const router = Router()
 
+router.post('/api/login', loginUser)
+
 router.get('/api/users', [authenticateUser, checkIfAdmin, getUsers])
 router.get('/api/users/:id', getUser)
 //router.post('/api/users', addUser)
 router.put('/api/users/:id', [authenticateUser, updateUser])
 router.delete('/api/users/:id', [authenticateUser, deleteUser])
-router.post('/api/login', loginUser)
 router.post('/api/users/register', registerUser)
 router.get('/api/users/verify/:token', verifyEmailToken)
 router.get('/api/users/logout', logoutUser)
@@ -84,6 +87,8 @@ router.get('/api/users/:id/categories/:category/jokes', getJokesByUserAndCategor
 router.get('/api/users/:id/joketypes/:type/jokes', getJokesByUserAndType)
 router.get('/api/users/:id/safe/:safe/jokes', getJokesByUserAndSafe)
 // router.put('/api/users/:id/update-jokes', updateUserJokes)
+
+//router.put('/api/users/request-new-token', refreshExpiredToken)
 
 router.get(
   '/api/jokes/:jokeId/:language/:category/:type',
