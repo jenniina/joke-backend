@@ -44,12 +44,10 @@ const userSchema: Schema = new Schema(
     token: {
       type: String,
       required: false,
-      default: undefined,
     },
     resetToken: {
       type: String,
       required: false,
-      default: undefined,
     },
   },
   { timestamps: true }

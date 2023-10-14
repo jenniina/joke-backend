@@ -44,12 +44,10 @@ const userSchema = new mongoose_1.Schema({
     token: {
         type: String,
         required: false,
-        default: undefined,
     },
     resetToken: {
         type: String,
         required: false,
-        default: undefined,
     },
 }, { timestamps: true });
 exports.User = (0, mongoose_1.model)('User', userSchema);

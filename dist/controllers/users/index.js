@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.refreshExpiredToken = exports.requestNewToken = exports.findUserByUsername = exports.verifyToken = exports.verifyTokenMiddleware = exports.generateToken = exports.changeUsernameToken = exports.changeUsername = exports.resetUsernameToken = exports.resetUsername = exports.forgotUsername = exports.verifyUsernameToken = exports.verifyUsername = exports.changeEmailToken = exports.changeEmail = exports.verifyEmailToken = exports.verifyEmail = exports.changePasswordToken = exports.changePassword = exports.resetPasswordToken = exports.resetPassword = exports.forgotPassword = exports.checkSession = exports.logoutUser = exports.registerUser = exports.loginUser = exports.deleteUser = exports.updateUser = exports.addUser = exports.getUser = exports.getUsers = exports.authenticateUser = exports.checkIfAdmin = void 0;
+exports.refreshExpiredToken = exports.requestNewToken = exports.findUserByUsername = exports.verifyToken = exports.verifyTokenMiddleware = exports.generateToken = exports.changeUsernameToken = exports.changeUsername = exports.resetUsernameToken = exports.resetUsername = exports.forgotUsername = exports.verifyUsernameToken = exports.verifyUsername = exports.changeEmailToken = exports.changeEmail = exports.verifyEmailToken = exports.verifyEmail = exports.changePasswordToken = exports.changePassword = exports.resetPasswordToken = exports.resetPassword = exports.forgotPassword = exports.logoutUser = exports.registerUser = exports.loginUser = exports.deleteUser = exports.updateUser = exports.addUser = exports.getUser = exports.getUsers = exports.authenticateUser = exports.checkIfAdmin = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_1 = require("../../models/user");
 const flatted = require('flatted');
@@ -116,6 +116,24 @@ var ETokenSent;
     ETokenSent["pt"] = "Token enviado";
     ETokenSent["cs"] = "Token odesl\u00E1n";
 })(ETokenSent || (ETokenSent = {}));
+var ENoTokenProvided;
+(function (ENoTokenProvided) {
+    ENoTokenProvided["en"] = "No token provided";
+    ENoTokenProvided["es"] = "No se proporcion\u00F3 ning\u00FAn token";
+    ENoTokenProvided["fr"] = "Aucun jeton fourni";
+    ENoTokenProvided["de"] = "Kein Token angegeben";
+    ENoTokenProvided["pt"] = "Nenhum token fornecido";
+    ENoTokenProvided["cs"] = "Nebyl poskytnut \u017E\u00E1dn\u00FD token";
+})(ENoTokenProvided || (ENoTokenProvided = {}));
+var ETokenVerified;
+(function (ETokenVerified) {
+    ETokenVerified["en"] = "Token verified";
+    ETokenVerified["es"] = "Token verificado";
+    ETokenVerified["fr"] = "Jeton v\u00E9rifi\u00E9";
+    ETokenVerified["de"] = "Token verifiziert";
+    ETokenVerified["pt"] = "Token verificado";
+    ETokenVerified["cs"] = "Token ov\u011B\u0159en";
+})(ETokenVerified || (ETokenVerified = {}));
 var EPasswordReset;
 (function (EPasswordReset) {
     EPasswordReset["en"] = "Password reset";
@@ -152,6 +170,114 @@ var EConfirmPassword;
     EConfirmPassword["pt"] = "Confirme a Senha";
     EConfirmPassword["cs"] = "Potvr\u010Fte heslo";
 })(EConfirmPassword || (EConfirmPassword = {}));
+var EInvalidLoginCredentials;
+(function (EInvalidLoginCredentials) {
+    EInvalidLoginCredentials["en"] = "Invalid login credentials";
+    EInvalidLoginCredentials["es"] = "Credenciales de inicio de sesi\u00F3n no v\u00E1lidas";
+    EInvalidLoginCredentials["fr"] = "Informations de connexion invalides";
+    EInvalidLoginCredentials["de"] = "Ung\u00FCltige Anmeldeinformationen";
+    EInvalidLoginCredentials["pt"] = "Credenciais de login inv\u00E1lidas";
+    EInvalidLoginCredentials["cs"] = "Neplatn\u00E9 p\u0159ihla\u0161ovac\u00ED \u00FAdaje";
+})(EInvalidLoginCredentials || (EInvalidLoginCredentials = {}));
+var EInvalidOrMissingToken;
+(function (EInvalidOrMissingToken) {
+    EInvalidOrMissingToken["en"] = "Invalid or missing request";
+    EInvalidOrMissingToken["es"] = "Solicitud inv\u00E1lida o faltante";
+    EInvalidOrMissingToken["fr"] = "Demande invalide ou manquante";
+    EInvalidOrMissingToken["de"] = "Ung\u00FCltige oder fehlende Anfrage";
+    EInvalidOrMissingToken["pt"] = "Solicita\u00E7\u00E3o inv\u00E1lida ou ausente";
+    EInvalidOrMissingToken["cs"] = "Neplatn\u00FD nebo chyb\u011Bj\u00EDc\u00ED po\u017Eadavek";
+})(EInvalidOrMissingToken || (EInvalidOrMissingToken = {}));
+var EPleaseCheckYourEmailIfYouHaveAlreadyRegistered;
+(function (EPleaseCheckYourEmailIfYouHaveAlreadyRegistered) {
+    EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["en"] = "Please check your email if you have already registered";
+    EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["es"] = "Por favor, compruebe su correo electr\u00F3nico si ya se ha registrado";
+    EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["fr"] = "Veuillez v\u00E9rifier votre email si vous \u00EAtes d\u00E9j\u00E0 inscrit";
+    EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["de"] = "Bitte \u00FCberpr\u00FCfen Sie Ihre E-Mail, wenn Sie sich bereits registriert haben";
+    EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["pt"] = "Por favor, verifique seu email se voc\u00EA j\u00E1 se registrou";
+    EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["cs"] = "Zkontrolujte sv\u016Fj email, pokud jste se ji\u017E zaregistrovali";
+})(EPleaseCheckYourEmailIfYouHaveAlreadyRegistered || (EPleaseCheckYourEmailIfYouHaveAlreadyRegistered = {}));
+var ELogInAtTheAppOrRequestANewPasswordResetToken;
+(function (ELogInAtTheAppOrRequestANewPasswordResetToken) {
+    ELogInAtTheAppOrRequestANewPasswordResetToken["en"] = "Log in at the app or request a new password reset token";
+    ELogInAtTheAppOrRequestANewPasswordResetToken["es"] = "Inicie sesi\u00F3n en la aplicaci\u00F3n o solicite un nuevo token de restablecimiento de contrase\u00F1a";
+    ELogInAtTheAppOrRequestANewPasswordResetToken["fr"] = "Connectez-vous \u00E0 l application ou demandez un nouveau jeton de r\u00E9initialisation de mot de passe";
+    ELogInAtTheAppOrRequestANewPasswordResetToken["de"] = "Melden Sie sich in der App an oder fordern Sie einen neuen Token zum Zur\u00FCcksetzen des Passworts an";
+    ELogInAtTheAppOrRequestANewPasswordResetToken["pt"] = "Fa\u00E7a login no aplicativo ou solicite um novo token de redefini\u00E7\u00E3o de senha";
+    ELogInAtTheAppOrRequestANewPasswordResetToken["cs"] = "P\u0159ihlaste se do aplikace nebo po\u017E\u00E1dejte o nov\u00FD token pro obnoven\u00ED hesla";
+})(ELogInAtTheAppOrRequestANewPasswordResetToken || (ELogInAtTheAppOrRequestANewPasswordResetToken = {}));
+var EAccessDeniedAdminPrivilegeRequired;
+(function (EAccessDeniedAdminPrivilegeRequired) {
+    EAccessDeniedAdminPrivilegeRequired["en"] = "Access denied. Admin privilege required.";
+    EAccessDeniedAdminPrivilegeRequired["es"] = "Acceso denegado. Se requiere privilegio de administrador.";
+    EAccessDeniedAdminPrivilegeRequired["fr"] = "Acc\u00E8s refus\u00E9. Privil\u00E8ge administrateur requis.";
+    EAccessDeniedAdminPrivilegeRequired["de"] = "Zugriff verweigert. Admin-Berechtigung erforderlich.";
+    EAccessDeniedAdminPrivilegeRequired["pt"] = "Acesso negado. Privil\u00E9gio de administrador necess\u00E1rio.";
+    EAccessDeniedAdminPrivilegeRequired["cs"] = "P\u0159\u00EDstup odep\u0159en. Vy\u017Eaduje se opr\u00E1vn\u011Bn\u00ED spr\u00E1vce.";
+})(EAccessDeniedAdminPrivilegeRequired || (EAccessDeniedAdminPrivilegeRequired = {}));
+var EAuthenticationFailed;
+(function (EAuthenticationFailed) {
+    EAuthenticationFailed["en"] = "Authentication failed";
+    EAuthenticationFailed["es"] = "Autenticaci\u00F3n fallida";
+    EAuthenticationFailed["fr"] = "L authentification a \u00E9chou\u00E9";
+    EAuthenticationFailed["de"] = "Authentifizierung fehlgeschlagen";
+    EAuthenticationFailed["pt"] = "Autentica\u00E7\u00E3o falhou";
+    EAuthenticationFailed["cs"] = "Autentizace selhala";
+})(EAuthenticationFailed || (EAuthenticationFailed = {}));
+var EUserAdded;
+(function (EUserAdded) {
+    EUserAdded["en"] = "User added";
+    EUserAdded["es"] = "Usuario a\u00F1adido";
+    EUserAdded["fr"] = "Utilisateur ajout\u00E9";
+    EUserAdded["de"] = "Benutzer hinzugef\u00FCgt";
+    EUserAdded["pt"] = "Usu\u00E1rio adicionado";
+    EUserAdded["cs"] = "U\u017Eivatel p\u0159id\u00E1n";
+})(EUserAdded || (EUserAdded = {}));
+var EUserUpdated;
+(function (EUserUpdated) {
+    EUserUpdated["en"] = "User updated";
+    EUserUpdated["es"] = "Usuario actualizado";
+    EUserUpdated["fr"] = "Utilisateur mis \u00E0 jour";
+    EUserUpdated["de"] = "Benutzer aktualisiert";
+    EUserUpdated["pt"] = "Usu\u00E1rio atualizado";
+    EUserUpdated["cs"] = "U\u017Eivatel aktualizov\u00E1n";
+})(EUserUpdated || (EUserUpdated = {}));
+var EUserDeleted;
+(function (EUserDeleted) {
+    EUserDeleted["en"] = "User deleted";
+    EUserDeleted["es"] = "Usuario borrado";
+    EUserDeleted["fr"] = "Utilisateur supprim\u00E9";
+    EUserDeleted["de"] = "Benutzer gel\u00F6scht";
+    EUserDeleted["pt"] = "Usu\u00E1rio exclu\u00EDdo";
+    EUserDeleted["cs"] = "U\u017Eivatel smaz\u00E1n";
+})(EUserDeleted || (EUserDeleted = {}));
+var EYouHaveLoggedOut;
+(function (EYouHaveLoggedOut) {
+    EYouHaveLoggedOut["en"] = "You have logged out";
+    EYouHaveLoggedOut["es"] = "Has cerrado la sesi\u00F3n";
+    EYouHaveLoggedOut["fr"] = "Vous vous \u00EAtes d\u00E9connect\u00E9";
+    EYouHaveLoggedOut["de"] = "Sie haben sich abgemeldet";
+    EYouHaveLoggedOut["pt"] = "Voc\u00EA saiu";
+    EYouHaveLoggedOut["cs"] = "Odhl\u00E1sili jste se";
+})(EYouHaveLoggedOut || (EYouHaveLoggedOut = {}));
+var EUsernameRequired;
+(function (EUsernameRequired) {
+    EUsernameRequired["en"] = "Username required";
+    EUsernameRequired["es"] = "Nombre de usuario requerido";
+    EUsernameRequired["fr"] = "Nom d utilisateur requis";
+    EUsernameRequired["de"] = "Benutzername erforderlich";
+    EUsernameRequired["pt"] = "Nome de usu\u00E1rio obrigat\u00F3rio";
+    EUsernameRequired["cs"] = "Vy\u017Eadov\u00E1no u\u017Eivatelsk\u00E9 jm\u00E9no";
+})(EUsernameRequired || (EUsernameRequired = {}));
+var ESuccessfullyLoggedIn;
+(function (ESuccessfullyLoggedIn) {
+    ESuccessfullyLoggedIn["en"] = "Successfully logged in";
+    ESuccessfullyLoggedIn["es"] = "Iniciado sesi\u00F3n con \u00E9xito";
+    ESuccessfullyLoggedIn["fr"] = "Connect\u00E9 avec succ\u00E8s";
+    ESuccessfullyLoggedIn["de"] = "Erfolgreich angemeldet";
+    ESuccessfullyLoggedIn["pt"] = "Logado com sucesso";
+    ESuccessfullyLoggedIn["cs"] = "\u00DAsp\u011B\u0161n\u011B p\u0159ihl\u00E1\u0161en";
+})(ESuccessfullyLoggedIn || (ESuccessfullyLoggedIn = {}));
 const generateToken = (id) => {
     if (!id)
         return undefined;
@@ -200,29 +326,37 @@ const verifyTokenMiddleware = (req, res) => __awaiter(void 0, void 0, void 0, fu
     try {
         const token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(' ')[1];
         if (!token)
-            throw new Error('No token provided');
+            throw new Error(ENoTokenProvided[req.body.language || 'en']);
         const decoded = verifyToken(token);
         const user = yield user_1.User.findById(decoded === null || decoded === void 0 ? void 0 : decoded.userId);
         if (!user)
             throw new Error('User not found');
-        res.status(200).json({ message: 'Token verified' });
+        res.status(200).json({
+            message: ETokenVerified[req.body.language || 'en'] || 'Token verified',
+        });
     }
     catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
+        res
+            .status(500)
+            .json({ success: false, message: EError[req.body.language || 'en'] });
     }
 });
 exports.verifyTokenMiddleware = verifyTokenMiddleware;
 // Middleware to check if the user has admin role
 const checkIfAdmin = (req, res, next) => {
     const user = req.body;
+    const language = user.language;
     if (user && user.role > 2) {
         // User is an admin, allow access
         next();
     }
     else {
         // User is not an admin, deny access
-        res.status(403).json({ message: 'Access denied. Admin privilege required.' });
+        res.status(403).json({
+            message: EAccessDeniedAdminPrivilegeRequired[language] ||
+                'Access denied. Admin privilege required.',
+        });
     }
 };
 exports.checkIfAdmin = checkIfAdmin;
@@ -231,18 +365,19 @@ const authenticateUser = (req, res, next) => __awaiter(void 0, void 0, void 0, f
     try {
         const token = (_b = req.headers.authorization) === null || _b === void 0 ? void 0 : _b.split(' ')[1];
         if (!token)
-            throw new Error('No token provided');
+            throw new Error(ENoTokenProvided[req.body.language || 'en']);
         const decoded = verifyToken(token);
         const user = yield user_1.User.findById(decoded === null || decoded === void 0 ? void 0 : decoded.userId);
+        const language = (user === null || user === void 0 ? void 0 : user.language) || 'en';
         if (!user)
-            throw new Error('User not authenticated');
+            throw new Error(EAuthenticationFailed[language]);
         // Attach user information to the request object
         req.body = user;
         next();
     }
     catch (error) {
         console.error('Error:', error);
-        res.status(401).json({ message: 'Authentication failed' });
+        res.status(401).json({ success: false, message: 'Authentication failed' });
     }
 });
 exports.authenticateUser = authenticateUser;
@@ -253,7 +388,9 @@ const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
+        res
+            .status(500)
+            .json({ success: false, message: EError[req.body.language || 'en'] });
     }
 });
 exports.getUsers = getUsers;
@@ -264,7 +401,9 @@ const getUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
+        res
+            .status(500)
+            .json({ success: false, message: EError[req.body.language || 'en'] });
     }
 });
 exports.getUser = getUser;
@@ -279,11 +418,18 @@ const addUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
         const newUser = yield user.save();
         const allUsers = yield user_1.User.find();
-        res.status(201).json({ message: 'User added', user: newUser, users: allUsers });
+        res.status(201).json({
+            success: true,
+            message: EUserAdded[newUser.language || 'en'],
+            user: newUser,
+            users: allUsers,
+        });
     }
     catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
+        res
+            .status(500)
+            .json({ success: false, message: EError[req.body.language || 'en'] });
     }
 });
 exports.addUser = addUser;
@@ -295,7 +441,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const allUsers = yield user_1.User.find();
         res.status(200).json({
             success: true,
-            message: 'User updated',
+            message: EUserUpdated[(updateUser === null || updateUser === void 0 ? void 0 : updateUser.language) || 'en'],
             user: updateUser,
         });
     }
@@ -333,14 +479,17 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const deletedUser = yield user_1.User.findByIdAndRemove(req.params.id);
         const allUsers = yield user_1.User.find();
         res.status(200).json({
-            message: 'User deleted',
+            success: true,
+            message: EUserDeleted[(deletedUser === null || deletedUser === void 0 ? void 0 : deletedUser.language) || 'en'],
             user: deletedUser,
             users: allUsers,
         });
     }
     catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
+        res
+            .status(500)
+            .json({ success: false, message: EError[req.body.language || 'en'] });
     }
 });
 exports.deleteUser = deleteUser;
@@ -357,15 +506,6 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             }
         });
     };
-    let EInvalidLoginCredentials;
-    (function (EInvalidLoginCredentials) {
-        EInvalidLoginCredentials["en"] = "Invalid login credentials";
-        EInvalidLoginCredentials["es"] = "Credenciales de inicio de sesi\u00F3n no v\u00E1lidas";
-        EInvalidLoginCredentials["fr"] = "Informations de connexion invalides";
-        EInvalidLoginCredentials["de"] = "Ung\u00FCltige Anmeldeinformationen";
-        EInvalidLoginCredentials["pt"] = "Credenciais de login inv\u00E1lidas";
-        EInvalidLoginCredentials["cs"] = "Neplatn\u00E9 p\u0159ihla\u0161ovac\u00ED \u00FAdaje";
-    })(EInvalidLoginCredentials || (EInvalidLoginCredentials = {}));
     const { username, password, language } = req.body;
     const user = yield user_1.User.findOne({ username });
     if (!user) {
@@ -376,37 +516,41 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     else if (user === null || user === void 0 ? void 0 : user.verified) {
         const passwordMatch = yield comparePassword.call(user, password);
-        console.log('passwordMatch', passwordMatch);
         if (passwordMatch) {
             const token = generateToken(user._id);
-            console.log('token, SUCCESS ', token);
-            res
-                .status(200)
-                .json({ success: true, message: 'Successfully logged in', user, token });
+            res.status(200).json({
+                success: true,
+                message: ESuccessfullyLoggedIn[user.language || 'en'],
+                user,
+                token,
+            });
         }
         else {
-            res.status(401).json({ success: false, message: 'Invalid login credentials' });
+            res.status(401).json({
+                success: false,
+                message: EInvalidLoginCredentials[user.language || 'en'],
+            });
         }
     }
     else if (!(user === null || user === void 0 ? void 0 : user.verified) && !(user === null || user === void 0 ? void 0 : user.token)) {
         try {
             const refresh = yield refreshExpiredToken(req, user._id);
-            console.log('refresh 0', refresh);
             if (refresh === null || refresh === void 0 ? void 0 : refresh.success) {
-                console.log(refresh === null || refresh === void 0 ? void 0 : refresh.message);
                 res.status(401).json({ success: false, message: refresh.message, user });
                 // res
                 //   .status(401)
                 //   .json({ success: false, message: 'User not verified. Please check your email ¤' })
             }
             else {
-                console.log(refresh === null || refresh === void 0 ? void 0 : refresh.message);
                 res.status(401).json({ success: false, message: refresh === null || refresh === void 0 ? void 0 : refresh.message });
             }
         }
         catch (error) {
             console.error(error);
-            res.status(500).json({ message: EError[req.body.language || 'en'] });
+            res.status(500).json({
+                success: false,
+                message: EError[req.body.language || 'en'],
+            });
         }
     }
     else if ((user === null || user === void 0 ? void 0 : user.token) && !(user === null || user === void 0 ? void 0 : user.verified)) {
@@ -415,15 +559,12 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             try {
                 //generate new token
                 const refresh = yield refreshExpiredToken(req, user._id);
-                console.log('refresh 1', refresh);
                 if (refresh === null || refresh === void 0 ? void 0 : refresh.success) {
-                    console.log(refresh === null || refresh === void 0 ? void 0 : refresh.message);
                     res
                         .status(401)
                         .json({ success: false, message: refresh.message, user, token: user.token });
                 }
                 else {
-                    console.log(refresh === null || refresh === void 0 ? void 0 : refresh.message);
                     res.status(401).json({ success: false, message: refresh === null || refresh === void 0 ? void 0 : refresh.message });
                 }
             }
@@ -437,9 +578,7 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         else if (!user.verified) {
             //generate new token
             const refresh = yield refreshExpiredToken(req, user._id);
-            console.log('refresh 1', refresh);
             if (refresh === null || refresh === void 0 ? void 0 : refresh.success) {
-                console.log(refresh === null || refresh === void 0 ? void 0 : refresh.message);
                 res
                     .status(401)
                     .json({ success: false, message: refresh.message, user, token: user.token });
@@ -455,10 +594,10 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.loginUser = loginUser;
 const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username } = req.body;
-    console.log('usernameee', username);
+    const language = req.body.language || 'en';
     const user = yield user_1.User.findOne({ username });
     if (!user) {
-        res.status(401).json({ success: false, message: 'Error .' });
+        res.status(401).json({ success: false, message: EError[language] });
     }
     else if (user) {
         try {
@@ -467,39 +606,36 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
             //const token = jwt.sign(userId, secret, { expiresIn: '1d' })
             //const token = '1234567890'
             const token = generateToken(user._id);
-            console.log('token a', token);
-            const link = `${process.env.BASE_URI}/api/users/reset/${token}?lang=${user.language}`;
-            console.log('link 3', link);
+            const link = `${process.env.BASE_URI}/api/users/reset/${token}?lang=${language}`;
             //User.findOneAndUpdate({ username }, { $set: { resetToken: token } })
             yield user_1.User.findOneAndUpdate({ username }, { resetToken: token });
-            sendMail(EPasswordReset[user.language], EResetPassword[user.language], username, user.language, link)
+            sendMail(EPasswordReset[language], EResetPassword[language], username, language, link)
                 .then((result) => {
-                console.log('resulTT', result);
                 res.status(200).json({
                     success: true,
-                    message: ETokenSent[user.language] || 'Token sent',
+                    message: ETokenSent[language] || 'Token sent',
                 });
             })
                 .catch((error) => {
                 console.log(error);
                 res.status(500).json({
                     success: false,
-                    message: EErrorSendingMail[user.language] ||
-                        'Error sending mail',
+                    message: EErrorSendingMail[language] || 'Error sending mail',
                 });
             });
         }
         catch (error) {
             console.error('Error:', error);
-            const usern = req.body.username;
-            const userr = yield user_1.User.findOne({ username: usern });
             res.status(500).json({
-                message: EError[(userr === null || userr === void 0 ? void 0 : userr.language) || 'en'] || 'Error ¤',
+                success: false,
+                message: EError[language || 'en'] || 'Error ¤',
             });
         }
     }
     else {
-        res.status(401).json({ success: false, message: 'Error * ' });
+        res
+            .status(401)
+            .json({ success: false, message: `${EError[language]} *` });
     }
 });
 exports.forgotPassword = forgotPassword;
@@ -538,8 +674,6 @@ exports.forgotPassword = forgotPassword;
 //   }
 // }
 const sendMail = (subject, message, username, language, link) => {
-    console.log(language);
-    console.log(link);
     return new Promise((resolve, reject) => {
         transporter.sendMail({
             from: process.env.EMAIL_USER,
@@ -636,14 +770,12 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     // } else {
                     const token = generateToken(newUser._id);
                     const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`;
-                    console.log('link 2', link);
                     newUser.token = token;
                     sendMail(EHelloWelcome[language], EEmailMessage[language], username, language, link)
                         .then((result) => {
                         newUser.save().then((user) => {
-                            console.log('resulT', result);
-                            console.log('user', user);
                             res.status(201).json({
+                                success: true,
                                 user,
                                 message: EMessage[language] || 'User registered',
                             });
@@ -663,6 +795,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 .catch((error) => {
                 console.error(error);
                 res.status(500).json({
+                    success: false,
                     message: EError[language || 'en'] || 'An error occurred',
                 });
             });
@@ -676,14 +809,14 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             }
             else {
                 const language = req.body.language || 'en';
-                res
-                    .status(500)
-                    .json({ message: EError[language] || 'An error occurred *' });
+                res.status(500).json({
+                    success: false,
+                    message: EError[language] || 'An error occurred *',
+                });
             }
         }));
     }
     catch (error) {
-        console.error('Error:', error);
         console.error('Error:', error);
         if (error.message === 'Token expired') {
             const user = yield user_1.User.findOne({ username });
@@ -697,9 +830,10 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         }
         else {
             const language = req.body.language || 'en';
-            res
-                .status(500)
-                .json({ message: EError[language] || 'An error occurred ¤' });
+            res.status(500).json({
+                success: false,
+                message: EError[language] || 'An error occurred ¤',
+            });
         }
     }
 });
@@ -745,7 +879,6 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                         token = generateToken(_id);
                         if (!(user === null || user === void 0 ? void 0 : user.verified)) {
                             const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`;
-                            console.log('link 3', link);
                             sendMail(EHelloWelcome[body.language], EEmailMessage[body.language], body.username, body.language, link)
                                 .then((r) => {
                                 reject({
@@ -808,7 +941,6 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                         //     } else {
                         user.token = token;
                         const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${req.body.language}`;
-                        console.log('link 1', link);
                         user
                             .save()
                             .then(() => {
@@ -920,18 +1052,43 @@ exports.refreshExpiredToken = refreshExpiredToken;
 //   }
 // }
 const requestNewToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const language = req.body.language || req.query.lang || 'en';
     if (!req.body.username) {
-        res.status(400).json({ message: 'Username required' });
+        res
+            .status(400)
+            .json({ success: false, message: EUsernameRequired[language] });
         return;
     }
     const username = req.body.username;
-    const user = yield user_1.User.findOne({ username });
-    if (!user) {
-        res.status(404).json({ message: 'User not found' });
-        return;
+    try {
+        const user = yield user_1.User.findOne({ username });
+        if (!user) {
+            res
+                .status(404)
+                .json({ success: false, message: `${EError[language]} -` });
+            return;
+        }
+        const token = generateToken(user._id);
+        if (token) {
+            res.json({
+                success: true,
+                message: `${EError[language]}. ${EErrorCreatingToken} ~`,
+                token,
+            });
+        }
+        else {
+            res.status(500).json({
+                success: false,
+                message: `${EError[language]}. ${EErrorCreatingToken} ¤`,
+            });
+        }
     }
-    const token = generateToken(user._id);
-    res.json({ token });
+    catch (_c) {
+        res.status(500).json({
+            success: false,
+            message: `${EError[language]}. ${EErrorCreatingToken} *`,
+        });
+    }
 });
 exports.requestNewToken = requestNewToken;
 // const hashedPassword = await bcrypt.hash(password, saltRounds)
@@ -1037,7 +1194,7 @@ exports.requestNewToken = requestNewToken;
 //   }
 // }
 const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c, _d, _e, _f, _g;
+    var _d, _e, _f, _g, _h;
     try {
         const token = req.params.token;
         const user = yield user_1.User.findOne({ token: token });
@@ -1107,14 +1264,14 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
           }
         </style>
         <title>
-        ${(_c = ETheComediansCompanion[language]) !== null && _c !== void 0 ? _c : "The Comedian' Companion"}</title>
+        ${(_d = ETheComediansCompanion[language]) !== null && _d !== void 0 ? _d : "The Comedian' Companion"}</title>
       </head>
       <body>
       <div>
-        <h1>${(_d = EVerificationSuccessful[language]) !== null && _d !== void 0 ? _d : 'Verification successful'}</h1>
-        <p>${(_e = EAccountSuccessfullyVerified[language]) !== null && _e !== void 0 ? _e : 'Account successfully verified'}.</p>
+        <h1>${(_e = EVerificationSuccessful[language]) !== null && _e !== void 0 ? _e : 'Verification successful'}</h1>
+        <p>${(_f = EAccountSuccessfullyVerified[language]) !== null && _f !== void 0 ? _f : 'Account successfully verified'}.</p>
         <p>
-        <a href="https://react-az.jenniina.fi">${(_f = EBackToTheApp[language]) !== null && _f !== void 0 ? _f : 'Back to the app'}</a>
+        <a href="https://react-az.jenniina.fi">${(_g = EBackToTheApp[language]) !== null && _g !== void 0 ? _g : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -1175,7 +1332,7 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
       <div>
         <h1>${EVerificationFailed[language]}</p>
         <p>
-        <a href="https://react-az.jenniina.fi">${(_g = EBackToTheApp[language]) !== null && _g !== void 0 ? _g : 'Back to the app'}</a>
+        <a href="https://react-az.jenniina.fi">${(_h = EBackToTheApp[language]) !== null && _h !== void 0 ? _h : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -1187,7 +1344,9 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
     catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
+        res
+            .status(500)
+            .json({ success: false, message: EError[req.body.language || 'en'] });
     }
 });
 exports.verifyEmailToken = verifyEmailToken;
@@ -1271,7 +1430,9 @@ const findUserByUsername = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
     catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
+        res
+            .status(500)
+            .json({ success: false, message: EError[req.body.language || 'en'] });
     }
 });
 exports.findUserByUsername = findUserByUsername;
@@ -1285,36 +1446,90 @@ exports.findUserByUsername = findUserByUsername;
 //   }
 // }
 const logoutUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const language = req.body.language || req.query.lang || 'en';
     try {
-        res.status(200).json({ message: 'User logged out' });
+        res.status(200).json({
+            success: true,
+            message: EYouHaveLoggedOut[language],
+        });
     }
     catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
+        res.status(500).json({ success: false, message: EError[language] });
     }
 });
 exports.logoutUser = logoutUser;
-const checkSession = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        res.status(200).json({ message: 'Session checked' });
-    }
-    catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: EError[req.body.language || 'en'] });
-    }
-});
-exports.checkSession = checkSession;
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _h, _j, _k, _l, _m;
+    var _j, _k, _l, _m, _o, _p, _q;
     const { token } = req.params;
+    const language = req.query.lang || 'en';
     try {
         // Validate the token
         const user = yield user_1.User.findOne({ resetToken: token });
         if (!user) {
-            res.status(400).json({ success: false, message: 'Invalid or expired token' });
+            res.send(`
+      <!DOCTYPE html>
+      <html lang=${language}>
+      <head>
+      
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style> 
+        @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Oswald:wght@500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
+          body {
+            font-family: Lato, Helvetica, Arial, sans-serif;
+            background-color: hsl(219, 100%, 10%);
+            color: white;
+            letter-spacing: -0.03em;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height: 100vh;
+          }
+          body > div {
+            margin: 0 auto;
+            max-width: 800px;  
+          }
+          h1 {
+            font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
+            text-align: center;
+          }
+          p {
+            font-size: 18px;
+            text-align: center;
+          }
+          a {
+            color: white;
+          }
+        </style>
+        <title>
+        ${(_j = ETheComediansCompanion[language]) !== null && _j !== void 0 ? _j : "The Comedian' Companion"}</title>
+      </head>
+      <body>
+      <div>
+        <h1>
+          ${EInvalidOrMissingToken[language] || 'Invalid or expired token'}
+        </h1>
+        <p>${ELogInAtTheAppOrRequestANewPasswordResetToken[language] ||
+                'Check the app to request a new password reset token. '}</p> 
+        <p>
+        <a href="https://react-az.jenniina.fi">${(_k = EBackToTheApp[language]) !== null && _k !== void 0 ? _k : 'Back to the app'}</a>
+        </p>
+      </div>
+      </body>
+    </html>
+    `);
+            // res.status(400).json({
+            //   success: false,
+            //   message:
+            //     `${EInvalidOrMissingToken[language as ELanguage]}. ${
+            //       ELogInAtTheAppOrRequestANewPasswordResetToken[language as ELanguage]
+            //     }` || 'Invalid or expired token',
+            // })
         }
-        const language = req.query.lang || 'en';
-        const htmlResponse = `
+        else if (user) {
+            const htmlResponse = `
     <html lang=${language}>
       <head>
         <meta charset="UTF-8">
@@ -1349,23 +1564,24 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
           }
         </style>
         <title>
-        ${(_h = ETheComediansCompanion[language]) !== null && _h !== void 0 ? _h : "The Comedian' Companion"}</title>
+        ${(_l = ETheComediansCompanion[language]) !== null && _l !== void 0 ? _l : "The Comedian' Companion"}</title>
       </head>
       <body>
       <div>
-        <h1>${(_j = EPasswordReset[language]) !== null && _j !== void 0 ? _j : 'Password Reset'}</h1>
+        <h1>${(_m = EPasswordReset[language]) !== null && _m !== void 0 ? _m : 'Password Reset'}</h1>
         <form action="/api/users/reset/${token}?lang=${language}" method="post">
-        <label for="newPassword">${(_k = ENewPassword[language]) !== null && _k !== void 0 ? _k : 'New password'}:</label>
+        <label for="newPassword">${(_o = ENewPassword[language]) !== null && _o !== void 0 ? _o : 'New password'}:</label>
         <input type="password" id="newPassword" name="newPassword" required>
-        <label for="confirmPassword">${(_l = EConfirmPassword[language]) !== null && _l !== void 0 ? _l : 'Confirm Password'}:</label>
+        <label for="confirmPassword">${(_p = EConfirmPassword[language]) !== null && _p !== void 0 ? _p : 'Confirm Password'}:</label>
         <input type="password" id="confirmPassword" name="confirmPassword" required>
-        <button type="submit">${(_m = EResetPassword[language]) !== null && _m !== void 0 ? _m : 'Reset password'}</button>
+        <button type="submit">${(_q = EResetPassword[language]) !== null && _q !== void 0 ? _q : 'Reset password'}</button>
       </form> 
       </div>
       </body>
     </html>
   `;
-        res.send(htmlResponse);
+            res.send(htmlResponse);
+        }
     }
     catch (error) {
         console.error(error);
@@ -1374,7 +1590,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.resetPassword = resetPassword;
 const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _o, _p, _q, _r, _s, _t, _u, _v;
+    var _r, _s, _t, _u, _v, _w, _x, _y;
     const { token } = req.params;
     const { newPassword, confirmPassword } = req.body;
     const language = req.query.lang || 'en';
@@ -1402,7 +1618,7 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
         if (!user) {
             res.status(400).json({ message: 'Invalid or expired token' });
         }
-        if (user) {
+        else if (user) {
             // Check if newPassword and confirmPassword match
             if (newPassword !== confirmPassword) {
                 // res.status(400).json({
@@ -1447,18 +1663,18 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
           }
         </style>
         <title>
-        ${(_o = ETheComediansCompanion[language]) !== null && _o !== void 0 ? _o : "The Comedian' Companion"}</title>
+        ${(_r = ETheComediansCompanion[language]) !== null && _r !== void 0 ? _r : "The Comedian' Companion"}</title>
       </head>
       <body>
       <div>
-        <h1>${(_p = EPasswordReset[language]) !== null && _p !== void 0 ? _p : 'Password Reset'}</h1>
+        <h1>${(_s = EPasswordReset[language]) !== null && _s !== void 0 ? _s : 'Password Reset'}</h1>
         <form action="/api/users/reset/${token}?lang=${language}" method="post">
-        <label for="newPassword">${(_q = ENewPassword[language]) !== null && _q !== void 0 ? _q : 'New password'}:</label>
+        <label for="newPassword">${(_t = ENewPassword[language]) !== null && _t !== void 0 ? _t : 'New password'}:</label>
         <input type="password" id="newPassword" name="newPassword" required>
-        <label for="confirmPassword">${(_r = EConfirmPassword[language]) !== null && _r !== void 0 ? _r : 'Confirm Password'}:</label>
+        <label for="confirmPassword">${(_u = EConfirmPassword[language]) !== null && _u !== void 0 ? _u : 'Confirm Password'}:</label>
         <input type="password" id="confirmPassword" name="confirmPassword" required>
-        <p>${(_s = EPasswordsDoNotMatch[language]) !== null && _s !== void 0 ? _s : 'Passwords do not match!'}</p>
-        <button type="submit">${(_t = EResetPassword[language]) !== null && _t !== void 0 ? _t : 'Reset password'}</button>
+        <p>${(_v = EPasswordsDoNotMatch[language]) !== null && _v !== void 0 ? _v : 'Passwords do not match!'}</p>
+        <button type="submit">${(_w = EResetPassword[language]) !== null && _w !== void 0 ? _w : 'Reset password'}</button>
       </form> 
       </div>
       </body>
@@ -1476,7 +1692,7 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 // user.resetToken = undefined
                 // await user
                 //   .save()
-                const updatedUser = yield user_1.User.findOneAndUpdate({ resetToken: token }, { resetToken: undefined, password: hashedPassword }, { new: true }).exec();
+                const updatedUser = yield user_1.User.findOneAndUpdate({ resetToken: token }, { $set: { password: hashedPassword, resetToken: null } }, { new: true }).exec();
                 if (updatedUser) {
                     res.send(`
       <!DOCTYPE html>
@@ -1515,13 +1731,13 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
           }
         </style>
         <title>
-        ${(_u = ETheComediansCompanion[language]) !== null && _u !== void 0 ? _u : "The Comedian' Companion"}</title>
+        ${(_x = ETheComediansCompanion[language]) !== null && _x !== void 0 ? _x : "The Comedian' Companion"}</title>
       </head>
       <body>
       <div>
         <h1>${EPasswordResetSuccessfully[language] || 'Password reset successfully'}</h1>
         <p>
-        <a href="https://react-az.jenniina.fi">${(_v = EBackToTheApp[language]) !== null && _v !== void 0 ? _v : 'Back to the app'}</a>
+        <a href="https://react-az.jenniina.fi">${(_y = EBackToTheApp[language]) !== null && _y !== void 0 ? _y : 'Back to the app'}</a>
         </p>
       </div>
       </body>

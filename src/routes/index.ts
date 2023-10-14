@@ -8,7 +8,6 @@ import {
   loginUser,
   registerUser,
   logoutUser,
-  checkSession,
   forgotPassword,
   resetPassword,
   resetPasswordToken,
@@ -64,7 +63,6 @@ router.delete('/api/users/:id', [authenticateUser, deleteUser])
 router.post('/api/users/register', registerUser)
 router.get('/api/users/verify/:token', verifyEmailToken)
 router.get('/api/users/logout', logoutUser)
-router.get('/api/users/session', checkSession)
 //router.get('/api/users/verify/:token', [verifyTokenMiddleware, verifyEmailToken])
 router.post('/api/users/:id', generateToken)
 router.post('/api/users/change', changePassword)
