@@ -430,7 +430,6 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
         )
       })
       .then((user) => {
-        console.log('User updated successfully, user: ', user)
         res.status(200).json({
           success: true,
           message: `${EUserUpdated[(user?.language as unknown as ELanguage) || 'en']}!`,
@@ -479,8 +478,7 @@ const comparePassword = async (
     }
   }
   try {
-    const { _id, passwordOld, password, language } = req.body
-    console.log('_id', _id)
+    const { _id, passwordOld, language } = req.body
 
     const user: IUser | null = await User.findById(_id)
 
@@ -497,7 +495,6 @@ const comparePassword = async (
         req.body = user
         next()
       } else {
-        console.log('Password match ', passwordMatch)
         res.status(401).json({
           success: false,
           message: `${ECurrentPasswordWrong[(language as ELanguage) || 'en']}`,

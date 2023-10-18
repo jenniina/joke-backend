@@ -450,7 +450,6 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             return user_1.User.findByIdAndUpdate({ _id: body._id }, Object.assign(Object.assign({}, body), { password: hash }), { new: true });
         })
             .then((user) => {
-            console.log('User updated successfully, user: ', user);
             res.status(200).json({
                 success: true,
                 message: `${EUserUpdated[(user === null || user === void 0 ? void 0 : user.language) || 'en']}!`,
@@ -497,8 +496,7 @@ const comparePassword = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         });
     };
     try {
-        const { _id, passwordOld, password, language } = req.body;
-        console.log('_id', _id);
+        const { _id, passwordOld, language } = req.body;
         const user = yield user_1.User.findById(_id);
         // if (!user) {
         //   res.status(404).json({ success: false, message: 'User not found ~' })
@@ -513,7 +511,6 @@ const comparePassword = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
                 next();
             }
             else {
-                console.log('Password match ', passwordMatch);
                 res.status(401).json({
                     success: false,
                     message: `${ECurrentPasswordWrong[language || 'en']}`,
