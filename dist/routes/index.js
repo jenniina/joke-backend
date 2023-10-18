@@ -11,7 +11,7 @@ router.post('/api/users/reset/:token', users_1.resetPasswordToken);
 router.get('/api/users', [users_1.authenticateUser, users_1.checkIfAdmin, users_1.getUsers]);
 router.get('/api/users/:id', users_1.getUser);
 //router.post('/api/users', addUser)
-router.put('/api/users/:id', [users_1.authenticateUser, users_1.updateUser]);
+router.put('/api/users/:id', [users_1.comparePassword, users_1.updateUser]);
 router.delete('/api/users/:id', [users_1.authenticateUser, users_1.deleteUser]);
 router.post('/api/users/register', users_1.registerUser);
 router.get('/api/users/verify/:token', users_1.verifyEmailToken);

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.refreshExpiredToken = exports.requestNewToken = exports.findUserByUsername = exports.verifyToken = exports.verifyTokenMiddleware = exports.generateToken = exports.changeUsernameToken = exports.changeUsername = exports.resetUsernameToken = exports.resetUsername = exports.forgotUsername = exports.verifyUsernameToken = exports.verifyUsername = exports.changeEmailToken = exports.changeEmail = exports.verifyEmailToken = exports.verifyEmail = exports.changePasswordToken = exports.changePassword = exports.resetPasswordToken = exports.resetPassword = exports.forgotPassword = exports.logoutUser = exports.registerUser = exports.loginUser = exports.deleteUser = exports.updateUser = exports.addUser = exports.getUser = exports.getUsers = exports.authenticateUser = exports.checkIfAdmin = void 0;
+exports.comparePassword = exports.refreshExpiredToken = exports.requestNewToken = exports.findUserByUsername = exports.verifyToken = exports.verifyTokenMiddleware = exports.generateToken = exports.changeUsernameToken = exports.changeUsername = exports.resetUsernameToken = exports.resetUsername = exports.forgotUsername = exports.verifyUsernameToken = exports.verifyUsername = exports.changeEmailToken = exports.changeEmail = exports.verifyEmailToken = exports.verifyEmail = exports.changePasswordToken = exports.changePassword = exports.resetPasswordToken = exports.resetPassword = exports.forgotPassword = exports.logoutUser = exports.registerUser = exports.loginUser = exports.deleteUser = exports.updateUser = exports.addUser = exports.getUser = exports.getUsers = exports.authenticateUser = exports.checkIfAdmin = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_1 = require("../../models/user");
 const flatted = require('flatted');
@@ -367,6 +367,8 @@ const authenticateUser = (req, res, next) => __awaiter(void 0, void 0, void 0, f
         if (!token)
             throw new Error(ENoTokenProvided[req.body.language || 'en']);
         const decoded = verifyToken(token);
+        if (!decoded)
+            throw new Error('Token not decoded');
         const user = yield user_1.User.findById(decoded === null || decoded === void 0 ? void 0 : decoded.userId);
         const language = (user === null || user === void 0 ? void 0 : user.language) || 'en';
         if (!user)
@@ -376,6 +378,7 @@ const authenticateUser = (req, res, next) => __awaiter(void 0, void 0, void 0, f
         next();
     }
     catch (error) {
+        //throw new Error((error as Error).message)
         console.error('Error:', error);
         res.status(401).json({ success: false, message: 'Authentication failed' });
     }
@@ -411,6 +414,7 @@ const addUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const body = req.body;
         const user = new user_1.User({
+            name: body.name,
             username: body.username,
             password: body.password,
             language: body.language,
@@ -435,15 +439,87 @@ const addUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.addUser = addUser;
 const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { params: { id: _id }, body, } = req;
-        const updateUser = yield user_1.User.findByIdAndUpdate({ _id: _id }, { new: true });
-        //const updateUser: IUser | null = await User.findByIdAndUpdate({ _id: _id }, body)
-        const allUsers = yield user_1.User.find();
-        res.status(200).json({
-            success: true,
-            message: EUserUpdated[(updateUser === null || updateUser === void 0 ? void 0 : updateUser.language) || 'en'],
-            user: updateUser,
+        const { 
+        // params: { _id: _id },
+        body, } = req;
+        const { password } = body;
+        const saltRounds = 10;
+        yield bcrypt_1.default
+            .hash(password, saltRounds)
+            .then((hash) => {
+            return user_1.User.findByIdAndUpdate({ _id: body._id }, Object.assign(Object.assign({}, body), { password: hash }), { new: true });
+        })
+            .then((user) => {
+            console.log('User updated successfully, user: ', user);
+            res.status(200).json({
+                success: true,
+                message: `${EUserUpdated[(user === null || user === void 0 ? void 0 : user.language) || 'en']}!`,
+                user,
+            });
+        })
+            .catch((error) => {
+            console.error('Error:', error);
+            res.status(500).json({
+                success: false,
+                message: `${EError[req.body.language || 'en']} *`,
+            });
         });
+    }
+    catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({
+            success: false,
+            message: `${EError[req.body.language || 'en']} ¤`,
+        });
+    }
+});
+exports.updateUser = updateUser;
+const comparePassword = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    let ECurrentPasswordWrong;
+    (function (ECurrentPasswordWrong) {
+        ECurrentPasswordWrong["en"] = "Current password wrong";
+        ECurrentPasswordWrong["es"] = "Contrase\u00F1a actual incorrecta";
+        ECurrentPasswordWrong["fr"] = "Mot de passe actuel incorrect";
+        ECurrentPasswordWrong["de"] = "Aktuelles Passwort falsch";
+        ECurrentPasswordWrong["pt"] = "Senha atual errada";
+        ECurrentPasswordWrong["cs"] = "Aktu\u00E1ln\u00ED heslo \u0161patn\u011B";
+    })(ECurrentPasswordWrong || (ECurrentPasswordWrong = {}));
+    const comparePassword = function (candidatePassword) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const isMatch = yield bcrypt_1.default.compare(candidatePassword, this.password);
+                return isMatch;
+            }
+            catch (error) {
+                console.error('Error:', error);
+                return false;
+            }
+        });
+    };
+    try {
+        const { _id, passwordOld, password, language } = req.body;
+        console.log('_id', _id);
+        const user = yield user_1.User.findById(_id);
+        // if (!user) {
+        //   res.status(404).json({ success: false, message: 'User not found ~' })
+        //   return
+        // }
+        if (user) {
+            const passwordMatch = yield comparePassword.call(user, passwordOld);
+            if (passwordMatch) {
+                // console.log('Password match', passwordMatch)
+                // res.status(200).json({ message: 'Password match' })
+                req.body = user;
+                next();
+            }
+            else {
+                console.log('Password match ', passwordMatch);
+                res.status(401).json({
+                    success: false,
+                    message: `${ECurrentPasswordWrong[language || 'en']}`,
+                });
+            }
+        }
     }
     catch (error) {
         console.error('Error:', error);
@@ -452,28 +528,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             .json({ success: false, message: EError[req.body.language || 'en'] });
     }
 });
-exports.updateUser = updateUser;
-// const updateUserJokes = async (req: Request, res: Response) => {
-//   try {
-//     const { id: _id } = req.params
-//     const { jokeId }: { jokeId: number | undefined } = req.body
-//     // Find the user by ID
-//     const user = await User.findById(_id)
-//     if (!user) {
-//       res.status(404).json({ message: 'User not found' })
-//       return
-//     }
-//     // Check if the 'jokeId' already exists in the 'jokes' array
-//     if (!user.jokes.includes(jokeId! as never)) {
-//       user.jokes.push(jokeId! as never)
-//       await user.save()
-//     }
-//     res.status(200).json({ message: 'User jokes updated successfully', user })
-//   } catch (error) {
-//     console.error('Error:', error)
-//     res.status(500).json({ message: EError[(req.body.language as ELanguage) || 'en'] })
-//   }
-// }
+exports.comparePassword = comparePassword;
 const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const deletedUser = yield user_1.User.findByIdAndRemove(req.params.id);
@@ -706,7 +761,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         EMessage["pt"] = "Usu\u00E1rio registrado. Por favor, verifique seu email para o link de verifica\u00E7\u00E3o";
         EMessage["cs"] = "U\u017Eivatel registrov\u00E1n. Pros\u00EDm, zkontrolujte sv\u016Fj email pro ov\u011B\u0159ovac\u00ED odkaz";
     })(EMessage || (EMessage = {}));
-    const { username, password, jokes, language } = req.body;
+    const { name, username, password, jokes, language } = req.body;
     const saltRounds = 10;
     let ERegistrationFailed;
     (function (ERegistrationFailed) {
@@ -717,15 +772,6 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         ERegistrationFailed["pt"] = "Registro falhou";
         ERegistrationFailed["cs"] = "Registrace se nezda\u0159ila";
     })(ERegistrationFailed || (ERegistrationFailed = {}));
-    let EErrorCreatingToken;
-    (function (EErrorCreatingToken) {
-        EErrorCreatingToken["en"] = "Error creating token";
-        EErrorCreatingToken["es"] = "Error al crear el token";
-        EErrorCreatingToken["fr"] = "Erreur lors de la cr\u00E9ation du jeton";
-        EErrorCreatingToken["de"] = "Fehler beim Erstellen des Tokens";
-        EErrorCreatingToken["pt"] = "Erro ao criar token";
-        EErrorCreatingToken["cs"] = "Chyba p\u0159i vytv\u00E1\u0159en\u00ED tokenu";
-    })(EErrorCreatingToken || (EErrorCreatingToken = {}));
     let EPleaseCheckYourEmailIfYouHaveAlreadyRegistered;
     (function (EPleaseCheckYourEmailIfYouHaveAlreadyRegistered) {
         EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["en"] = "Please check your email if you have already registered";
@@ -749,6 +795,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 }
                 else {
                     const newUser = new user_1.User({
+                        name,
                         username,
                         password: hashedPassword,
                         jokes,
@@ -1460,7 +1507,7 @@ const logoutUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.logoutUser = logoutUser;
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _j, _k, _l, _m, _o, _p, _q;
+    var _j, _k, _l, _m, _o, _p, _q, _r;
     const { token } = req.params;
     const language = req.query.lang || 'en';
     try {
@@ -1539,6 +1586,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
           body {
             font-family: Lato, Helvetica, Arial, sans-serif;
+            font-size:20px;
             background-color: hsl(219, 100%, 10%);
             color: white;
             letter-spacing: -0.03em;
@@ -1551,7 +1599,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             margin: 0 auto;
             max-width: 800px;  
           }
-          h1 {
+          h1, h2 {
             font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
             text-align: center;
           }
@@ -1562,20 +1610,56 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
           a {
             color: white;
           }
+          form {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap:1.6rem;
+          }
+          form > div {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap:0.6rem;
+          }
+          input {
+            padding: 0.6rem;
+            border-radius: 2rem;
+            border: none;
+            background-color: hsl(219, 100%, 20%);
+            color: white;
+            font-size: 1.2rem;
+          }
+          button {
+            padding: 0.6rem;
+            border-radius: 2rem;
+            border: none;
+            background-color: hsl(219, 100%, 30%);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+          }
         </style>
         <title>
         ${(_l = ETheComediansCompanion[language]) !== null && _l !== void 0 ? _l : "The Comedian' Companion"}</title>
       </head>
       <body>
       <div>
-        <h1>${(_m = EPasswordReset[language]) !== null && _m !== void 0 ? _m : 'Password Reset'}</h1>
+        <h1>${(_m = ETheComediansCompanion[language]) !== null && _m !== void 0 ? _m : "The Comedian's Companion"}
+        </h1>
+        <h2>${(_o = EPasswordReset[language]) !== null && _o !== void 0 ? _o : 'Password Reset'}</h2>
         <form action="/api/users/reset/${token}?lang=${language}" method="post">
-        <label for="newPassword">${(_o = ENewPassword[language]) !== null && _o !== void 0 ? _o : 'New password'}:</label>
-        <input type="password" id="newPassword" name="newPassword" required>
-        <label for="confirmPassword">${(_p = EConfirmPassword[language]) !== null && _p !== void 0 ? _p : 'Confirm Password'}:</label>
-        <input type="password" id="confirmPassword" name="confirmPassword" required>
-        <button type="submit">${(_q = EResetPassword[language]) !== null && _q !== void 0 ? _q : 'Reset password'}</button>
-      </form> 
+          <div>
+            <label for="newPassword">${(_p = ENewPassword[language]) !== null && _p !== void 0 ? _p : 'New password'}:</label>
+            <input type="password" id="newPassword" name="newPassword" required>
+          </div>
+          <div>
+            <label for="confirmPassword">${(_q = EConfirmPassword[language]) !== null && _q !== void 0 ? _q : 'Confirm Password'}:</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required>
+          </div>
+          <button type="submit">${(_r = EResetPassword[language]) !== null && _r !== void 0 ? _r : 'Reset password'}</button>
+        </form> 
       </div>
       </body>
     </html>
@@ -1590,7 +1674,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.resetPassword = resetPassword;
 const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _r, _s, _t, _u, _v, _w, _x, _y;
+    var _s, _t, _u, _v, _w, _x, _y, _z;
     const { token } = req.params;
     const { newPassword, confirmPassword } = req.body;
     const language = req.query.lang || 'en';
@@ -1663,18 +1747,18 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
           }
         </style>
         <title>
-        ${(_r = ETheComediansCompanion[language]) !== null && _r !== void 0 ? _r : "The Comedian' Companion"}</title>
+        ${(_s = ETheComediansCompanion[language]) !== null && _s !== void 0 ? _s : "The Comedian' Companion"}</title>
       </head>
       <body>
       <div>
-        <h1>${(_s = EPasswordReset[language]) !== null && _s !== void 0 ? _s : 'Password Reset'}</h1>
+        <h1>${(_t = EPasswordReset[language]) !== null && _t !== void 0 ? _t : 'Password Reset'}</h1>
         <form action="/api/users/reset/${token}?lang=${language}" method="post">
-        <label for="newPassword">${(_t = ENewPassword[language]) !== null && _t !== void 0 ? _t : 'New password'}:</label>
+        <label for="newPassword">${(_u = ENewPassword[language]) !== null && _u !== void 0 ? _u : 'New password'}:</label>
         <input type="password" id="newPassword" name="newPassword" required>
-        <label for="confirmPassword">${(_u = EConfirmPassword[language]) !== null && _u !== void 0 ? _u : 'Confirm Password'}:</label>
+        <label for="confirmPassword">${(_v = EConfirmPassword[language]) !== null && _v !== void 0 ? _v : 'Confirm Password'}:</label>
         <input type="password" id="confirmPassword" name="confirmPassword" required>
-        <p>${(_v = EPasswordsDoNotMatch[language]) !== null && _v !== void 0 ? _v : 'Passwords do not match!'}</p>
-        <button type="submit">${(_w = EResetPassword[language]) !== null && _w !== void 0 ? _w : 'Reset password'}</button>
+        <p>${(_w = EPasswordsDoNotMatch[language]) !== null && _w !== void 0 ? _w : 'Passwords do not match!'}</p>
+        <button type="submit">${(_x = EResetPassword[language]) !== null && _x !== void 0 ? _x : 'Reset password'}</button>
       </form> 
       </div>
       </body>
@@ -1731,13 +1815,13 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
           }
         </style>
         <title>
-        ${(_x = ETheComediansCompanion[language]) !== null && _x !== void 0 ? _x : "The Comedian' Companion"}</title>
+        ${(_y = ETheComediansCompanion[language]) !== null && _y !== void 0 ? _y : "The Comedian' Companion"}</title>
       </head>
       <body>
       <div>
         <h1>${EPasswordResetSuccessfully[language] || 'Password reset successfully'}</h1>
         <p>
-        <a href="https://react-az.jenniina.fi">${(_y = EBackToTheApp[language]) !== null && _y !== void 0 ? _y : 'Back to the app'}</a>
+        <a href="https://react-az.jenniina.fi">${(_z = EBackToTheApp[language]) !== null && _z !== void 0 ? _z : 'Back to the app'}</a>
         </p>
       </div>
       </body>

@@ -33,6 +33,7 @@ import {
   //verificationSuccess,
   requestNewToken,
   refreshExpiredToken,
+  comparePassword,
 } from '../controllers/users'
 import {
   getJokes,
@@ -58,7 +59,7 @@ router.post('/api/users/reset/:token', resetPasswordToken)
 router.get('/api/users', [authenticateUser, checkIfAdmin, getUsers])
 router.get('/api/users/:id', getUser)
 //router.post('/api/users', addUser)
-router.put('/api/users/:id', [authenticateUser, updateUser])
+router.put('/api/users/:id', [comparePassword, updateUser])
 router.delete('/api/users/:id', [authenticateUser, deleteUser])
 router.post('/api/users/register', registerUser)
 router.get('/api/users/verify/:token', verifyEmailToken)

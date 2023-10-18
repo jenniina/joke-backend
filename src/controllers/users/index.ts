@@ -342,6 +342,7 @@ const authenticateUser = async (
       throw new Error(ENoTokenProvided[(req.body.language as ELanguage) || 'en'])
 
     const decoded = verifyToken(token)
+    if (!decoded) throw new Error('Token not decoded')
     const user: IUser | null = await User.findById(decoded?.userId)
     const language = user?.language || 'en'
 
@@ -351,6 +352,7 @@ const authenticateUser = async (
     req.body = user
     next()
   } catch (error) {
+    //throw new Error((error as Error).message)
     console.error('Error:', error)
     res.status(401).json({ success: false, message: 'Authentication failed' })
   }
@@ -382,9 +384,10 @@ const getUser = async (req: Request, res: Response): Promise<void> => {
 
 const addUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const body = req.body as Pick<IUser, 'username' | 'password' | 'language'>
+    const body = req.body as Pick<IUser, 'name' | 'username' | 'password' | 'language'>
 
     const user: IUser = new User({
+      name: body.name,
       username: body.username,
       password: body.password,
       language: body.language,
@@ -411,22 +414,96 @@ const addUser = async (req: Request, res: Response): Promise<void> => {
 const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
-      params: { id: _id },
+      // params: { _id: _id },
       body,
     } = req
 
-    const updateUser: IUser | null = await User.findByIdAndUpdate(
-      { _id: _id },
-      { new: true }
-    )
-    //const updateUser: IUser | null = await User.findByIdAndUpdate({ _id: _id }, body)
-
-    const allUsers: IUser[] = await User.find()
-    res.status(200).json({
-      success: true,
-      message: EUserUpdated[(updateUser?.language as unknown as ELanguage) || 'en'],
-      user: updateUser,
+    const { password } = body
+    const saltRounds = 10
+    await bcrypt
+      .hash(password, saltRounds)
+      .then((hash) => {
+        return User.findByIdAndUpdate(
+          { _id: body._id },
+          { ...body, password: hash },
+          { new: true }
+        )
+      })
+      .then((user) => {
+        console.log('User updated successfully, user: ', user)
+        res.status(200).json({
+          success: true,
+          message: `${EUserUpdated[(user?.language as unknown as ELanguage) || 'en']}!`,
+          user,
+        })
+      })
+      .catch((error) => {
+        console.error('Error:', error)
+        res.status(500).json({
+          success: false,
+          message: `${EError[(req.body.language as ELanguage) || 'en']} *`,
+        })
+      })
+  } catch (error) {
+    console.error('Error:', error)
+    res.status(500).json({
+      success: false,
+      message: `${EError[(req.body.language as ELanguage) || 'en']} ¤`,
     })
+  }
+}
+
+const comparePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  enum ECurrentPasswordWrong {
+    en = 'Current password wrong',
+    es = 'Contraseña actual incorrecta',
+    fr = 'Mot de passe actuel incorrect',
+    de = 'Aktuelles Passwort falsch',
+    pt = 'Senha atual errada',
+    cs = 'Aktuální heslo špatně',
+  }
+  const comparePassword = async function (
+    this: IUser,
+    candidatePassword: string
+  ): Promise<boolean> {
+    try {
+      const isMatch: boolean = await bcrypt.compare(candidatePassword, this.password!)
+      return isMatch
+    } catch (error) {
+      console.error('Error:', error)
+      return false
+    }
+  }
+  try {
+    const { _id, passwordOld, password, language } = req.body
+    console.log('_id', _id)
+
+    const user: IUser | null = await User.findById(_id)
+
+    // if (!user) {
+    //   res.status(404).json({ success: false, message: 'User not found ~' })
+    //   return
+    // }
+    if (user) {
+      const passwordMatch: boolean = await comparePassword.call(user, passwordOld)
+
+      if (passwordMatch) {
+        // console.log('Password match', passwordMatch)
+        // res.status(200).json({ message: 'Password match' })
+        req.body = user
+        next()
+      } else {
+        console.log('Password match ', passwordMatch)
+        res.status(401).json({
+          success: false,
+          message: `${ECurrentPasswordWrong[(language as ELanguage) || 'en']}`,
+        })
+      }
+    }
   } catch (error) {
     console.error('Error:', error)
     res
@@ -434,32 +511,6 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
       .json({ success: false, message: EError[(req.body.language as ELanguage) || 'en'] })
   }
 }
-
-// const updateUserJokes = async (req: Request, res: Response) => {
-//   try {
-//     const { id: _id } = req.params
-//     const { jokeId }: { jokeId: number | undefined } = req.body
-
-//     // Find the user by ID
-//     const user = await User.findById(_id)
-
-//     if (!user) {
-//       res.status(404).json({ message: 'User not found' })
-//       return
-//     }
-
-//     // Check if the 'jokeId' already exists in the 'jokes' array
-//     if (!user.jokes.includes(jokeId! as never)) {
-//       user.jokes.push(jokeId! as never)
-//       await user.save()
-//     }
-
-//     res.status(200).json({ message: 'User jokes updated successfully', user })
-//   } catch (error) {
-//     console.error('Error:', error)
-//     res.status(500).json({ message: EError[(req.body.language as ELanguage) || 'en'] })
-//   }
-// }
 
 const deleteUser = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -701,7 +752,7 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
     cs = 'Uživatel registrován. Prosím, zkontrolujte svůj email pro ověřovací odkaz',
   }
 
-  const { username, password, jokes, language } = req.body
+  const { name, username, password, jokes, language } = req.body
   const saltRounds = 10
 
   enum ERegistrationFailed {
@@ -711,14 +762,6 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
     de = 'Registrierung fehlgeschlagen',
     pt = 'Registro falhou',
     cs = 'Registrace se nezdařila',
-  }
-  enum EErrorCreatingToken {
-    en = 'Error creating token',
-    es = 'Error al crear el token',
-    fr = 'Erreur lors de la création du jeton',
-    de = 'Fehler beim Erstellen des Tokens',
-    pt = 'Erro ao criar token',
-    cs = 'Chyba při vytváření tokenu',
   }
   enum EPleaseCheckYourEmailIfYouHaveAlreadyRegistered {
     en = 'Please check your email if you have already registered',
@@ -744,6 +787,7 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
               })
             } else {
               const newUser = new User({
+                name,
                 username,
                 password: hashedPassword,
                 jokes,
@@ -1639,6 +1683,7 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
         @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
           body {
             font-family: Lato, Helvetica, Arial, sans-serif;
+            font-size:20px;
             background-color: hsl(219, 100%, 10%);
             color: white;
             letter-spacing: -0.03em;
@@ -1651,7 +1696,7 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
             margin: 0 auto;
             max-width: 800px;  
           }
-          h1 {
+          h1, h2 {
             font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
             text-align: center;
           }
@@ -1662,6 +1707,36 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
           a {
             color: white;
           }
+          form {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap:1.6rem;
+          }
+          form > div {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap:0.6rem;
+          }
+          input {
+            padding: 0.6rem;
+            border-radius: 2rem;
+            border: none;
+            background-color: hsl(219, 100%, 20%);
+            color: white;
+            font-size: 1.2rem;
+          }
+          button {
+            padding: 0.6rem;
+            border-radius: 2rem;
+            border: none;
+            background-color: hsl(219, 100%, 30%);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+          }
         </style>
         <title>
         ${
@@ -1670,20 +1745,26 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
       </head>
       <body>
       <div>
-        <h1>${EPasswordReset[language as ELanguage] ?? 'Password Reset'}</h1>
+        <h1>${ETheComediansCompanion[language as ELanguage] ?? "The Comedian's Companion"}
+        </h1>
+        <h2>${EPasswordReset[language as ELanguage] ?? 'Password Reset'}</h2>
         <form action="/api/users/reset/${token}?lang=${language}" method="post">
-        <label for="newPassword">${
-          ENewPassword[language as ELanguage] ?? 'New password'
-        }:</label>
-        <input type="password" id="newPassword" name="newPassword" required>
-        <label for="confirmPassword">${
-          EConfirmPassword[language as ELanguage] ?? 'Confirm Password'
-        }:</label>
-        <input type="password" id="confirmPassword" name="confirmPassword" required>
-        <button type="submit">${
-          EResetPassword[language as ELanguage] ?? 'Reset password'
-        }</button>
-      </form> 
+          <div>
+            <label for="newPassword">${
+              ENewPassword[language as ELanguage] ?? 'New password'
+            }:</label>
+            <input type="password" id="newPassword" name="newPassword" required>
+          </div>
+          <div>
+            <label for="confirmPassword">${
+              EConfirmPassword[language as ELanguage] ?? 'Confirm Password'
+            }:</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required>
+          </div>
+          <button type="submit">${
+            EResetPassword[language as ELanguage] ?? 'Reset password'
+          }</button>
+        </form> 
       </div>
       </body>
     </html>
@@ -2021,4 +2102,5 @@ export {
   findUserByUsername,
   requestNewToken,
   refreshExpiredToken,
+  comparePassword,
 }
