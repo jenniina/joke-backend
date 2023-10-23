@@ -1742,6 +1742,36 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
           a {
             color: white;
           }
+          form {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap:1.6rem;
+          } 
+          form > div {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap:0.6rem;
+          }
+          input {
+            padding: 0.6rem;
+            border-radius: 2rem;
+            border: none;
+            background-color: hsl(219, 100%, 20%);
+            color: white;
+            font-size: 1.2rem;
+          }
+          button {
+            padding: 0.6rem;
+            border-radius: 2rem;
+            border: none;
+            background-color: hsl(219, 100%, 30%);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+          }
         </style>
         <title>
         ${(_s = ETheComediansCompanion[language]) !== null && _s !== void 0 ? _s : "The Comedian' Companion"}</title>
