@@ -1,5 +1,3 @@
-import e from 'express'
-import { IJokeSingle, IJokeTwoPart } from '../types'
 import { model, Schema } from 'mongoose'
 
 const jokeSchema: Schema = new Schema(
