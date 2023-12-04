@@ -35,12 +35,9 @@ exports.getUserQuiz = getUserQuiz;
 const addQuiz = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const body = req.body;
-        console.log('body: ', body);
         const existingQuiz = (yield quiz_1.Quiz.findOne({
             user: body.user,
-            type: body.type,
         }));
-        console.log('existingQuiz: ', existingQuiz);
         if (!existingQuiz) {
             const quiz = new quiz_1.Quiz({
                 highscores: body.highscores,
@@ -48,7 +45,6 @@ const addQuiz = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 user: body.user,
             });
             const newQuiz = yield quiz.save();
-            console.log('newQuiz: ', newQuiz);
             res.status(201).json({ message: 'Quiz added', quiz: newQuiz });
         }
         else if (!body.type || !body.user) {
@@ -60,7 +56,6 @@ const addQuiz = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             existingQuiz.user = body.user;
             try {
                 const updatedQuiz = yield existingQuiz.save();
-                console.log('updatedQuiz: ', updatedQuiz);
                 res.status(200).json({ message: 'Quiz updated', quiz: updatedQuiz });
             }
             catch (validationError) {
