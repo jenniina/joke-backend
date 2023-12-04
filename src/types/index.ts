@@ -2,13 +2,10 @@ import { Document } from 'mongoose'
 
 export interface IUser extends Document {
   _id?: string
-  name: string
   username: string
   password: string
   language: ELanguages
   verified?: boolean
-  token?: string
-  resetToken?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -82,11 +79,42 @@ export interface IJokeTwoPart extends IJokeCommonFields {
 export type IJoke = IJokeSingle | IJokeTwoPart
 
 export interface ITokenPayload {
-  userId: string | undefined
-  iat?: number
-  exp?: number
+  userId: string
 }
 export interface IToken {
-  token: string | undefined
+  token: string
   createdAt: Date
+}
+
+export enum EQuizType {
+  easy = 'easy',
+  medium = 'medium',
+  hard = 'hard',
+}
+
+export interface IQuiz extends Document {
+  highscores: {
+    easy: number
+    medium: number
+    hard: number
+  }
+  type: EQuizType
+  user: IUser['_id']
+  createdAt?: string
+  updatedAt?: string
+}
+export interface IQuestion extends Document {
+  questionId: number
+  question: string
+  options: string[]
+  correctAnswer: boolean
+  incorrectAnswers: boolean[]
+  createdAt?: string
+  updatedAt?: string
+}
+export interface IQuizQuestion extends Document {
+  quiz: IQuiz['_id']
+  question: IQuestion['_id']
+  createdAt?: string
+  updatedAt?: string
 }
