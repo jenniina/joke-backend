@@ -24,13 +24,11 @@ const getUserQuiz = async (req: Request, res: Response): Promise<void> => {
 const addQuiz = async (req: Request, res: Response): Promise<void> => {
   try {
     const body = req.body as Pick<IQuiz, 'highscores' | 'type' | 'user'>
-    console.log('body: ', body)
 
     const existingQuiz = (await Quiz.findOne({
       user: body.user,
-      type: body.type,
     })) as IQuiz
-    console.log('existingQuiz: ', existingQuiz)
+
     if (!existingQuiz) {
       const quiz = new Quiz({
         highscores: body.highscores,
@@ -39,7 +37,6 @@ const addQuiz = async (req: Request, res: Response): Promise<void> => {
       }) as IQuiz
 
       const newQuiz: IQuiz = await quiz.save()
-      console.log('newQuiz: ', newQuiz)
 
       res.status(201).json({ message: 'Quiz added', quiz: newQuiz })
     } else if (!body.type || !body.user) {
@@ -50,7 +47,6 @@ const addQuiz = async (req: Request, res: Response): Promise<void> => {
       existingQuiz.user = body.user
       try {
         const updatedQuiz: IQuiz = await existingQuiz.save()
-        console.log('updatedQuiz: ', updatedQuiz)
         res.status(200).json({ message: 'Quiz updated', quiz: updatedQuiz })
       } catch (validationError) {
         console.error(validationError)
