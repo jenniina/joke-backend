@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ELanguages = exports.EJokeType = exports.ECategory = void 0;
+exports.EQuizType = exports.ELanguages = exports.EJokeType = exports.ECategory = void 0;
 var ECategory;
 (function (ECategory) {
     ECategory["all"] = "All";
@@ -25,3 +25,9 @@ var ELanguages;
     ELanguages["Portuguese"] = "pt";
     ELanguages["Czech"] = "cs";
 })(ELanguages || (exports.ELanguages = ELanguages = {}));
+var EQuizType;
+(function (EQuizType) {
+    EQuizType["easy"] = "easy";
+    EQuizType["medium"] = "medium";
+    EQuizType["hard"] = "hard";
+})(EQuizType || (exports.EQuizType = EQuizType = {}));

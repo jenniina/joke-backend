@@ -6,7 +6,7 @@ const userSchema = new mongoose_1.Schema({
     username: {
         type: String,
         required: true,
-        //unique: true,
+        unique: true,
         minlength: 3,
     },
     name: {
@@ -28,21 +28,6 @@ const userSchema = new mongoose_1.Schema({
         type: Boolean,
         required: true,
         default: false,
-    },
-    role: {
-        type: Number,
-        required: true,
-        default: 1,
-        max: 3,
-        min: 1,
-    },
-    token: {
-        type: String,
-        required: false,
-    },
-    resetToken: {
-        type: String,
-        required: false,
     },
 }, { timestamps: true });
 exports.User = (0, mongoose_1.model)('User', userSchema);
