@@ -23,8 +23,8 @@ const getQuizzes = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 exports.getQuizzes = getQuizzes;
 const getUserQuiz = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { id, type } = req.params;
-        const quiz = yield quiz_1.Quiz.findOne({ user: id, type: type });
+        const { id } = req.params;
+        const quiz = yield quiz_1.Quiz.findOne({ user: id });
         res.status(200).json(quiz);
     }
     catch (error) {
@@ -41,18 +41,16 @@ const addQuiz = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!existingQuiz) {
             const quiz = new quiz_1.Quiz({
                 highscores: body.highscores,
-                type: body.type,
                 user: body.user,
             });
             const newQuiz = yield quiz.save();
             res.status(201).json({ message: 'Quiz added', quiz: newQuiz });
         }
-        else if (!body.type || !body.user) {
+        else if (!body.user) {
             res.status(400).json({ message: 'type and user fields are required' });
         }
         else {
             existingQuiz.highscores = body.highscores;
-            existingQuiz.type = body.type;
             existingQuiz.user = body.user;
             try {
                 const updatedQuiz = yield existingQuiz.save();
