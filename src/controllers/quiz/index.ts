@@ -13,8 +13,8 @@ const getQuizzes = async (req: Request, res: Response): Promise<void> => {
 
 const getUserQuiz = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id, type } = req.params
-    const quiz = await Quiz.findOne({ user: id, type: type })
+    const { id } = req.params
+    const quiz = await Quiz.findOne({ user: id })
     res.status(200).json(quiz)
   } catch (error) {
     throw error
@@ -23,7 +23,7 @@ const getUserQuiz = async (req: Request, res: Response): Promise<void> => {
 
 const addQuiz = async (req: Request, res: Response): Promise<void> => {
   try {
-    const body = req.body as Pick<IQuiz, 'highscores' | 'type' | 'user'>
+    const body = req.body as Pick<IQuiz, 'highscores' | 'user'>
 
     const existingQuiz = (await Quiz.findOne({
       user: body.user,
@@ -32,18 +32,16 @@ const addQuiz = async (req: Request, res: Response): Promise<void> => {
     if (!existingQuiz) {
       const quiz = new Quiz({
         highscores: body.highscores,
-        type: body.type,
         user: body.user,
       }) as IQuiz
 
       const newQuiz: IQuiz = await quiz.save()
 
       res.status(201).json({ message: 'Quiz added', quiz: newQuiz })
-    } else if (!body.type || !body.user) {
+    } else if (!body.user) {
       res.status(400).json({ message: 'type and user fields are required' })
     } else {
       existingQuiz.highscores = body.highscores
-      existingQuiz.type = body.type
       existingQuiz.user = body.user
       try {
         const updatedQuiz: IQuiz = await existingQuiz.save()

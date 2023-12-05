@@ -102,7 +102,7 @@ router.delete('/api/jokes/:id/delete-user/:userId', deleteUserFromJoke)
 //router.get('/api/quiz', getQuizzes)
 router.post('/api/quiz', addQuiz)
 router.put('/api/quiz', addQuiz)
-router.get('/api/quiz/:id/:type', getUserQuiz)
+router.get('/api/quiz/:id', getUserQuiz)
 
 router.get('/api/', (req, res) => {
   res.send('Nothing to see here')

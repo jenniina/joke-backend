@@ -7,10 +7,6 @@ const quizSchema: Schema = new Schema(
       medium: { type: Number, default: 0 },
       hard: { type: Number, default: 0 },
     },
-    type: {
-      type: String,
-      enum: ['easy', 'medium', 'hard'],
-    },
     user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
