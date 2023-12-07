@@ -4,9 +4,18 @@ exports.Quiz = void 0;
 const mongoose_1 = require("mongoose");
 const quizSchema = new mongoose_1.Schema({
     highscores: {
-        easy: { type: Number, default: 0 },
-        medium: { type: Number, default: 0 },
-        hard: { type: Number, default: 0 },
+        easy: {
+            score: { type: Number, default: 0 },
+            time: { type: Number, default: 0 },
+        },
+        medium: {
+            score: { type: Number, default: 0 },
+            time: { type: Number, default: 0 },
+        },
+        hard: {
+            score: { type: Number, default: 0 },
+            time: { type: Number, default: 0 },
+        },
     },
     user: {
         type: mongoose_1.Schema.Types.ObjectId,

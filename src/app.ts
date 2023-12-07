@@ -3,6 +3,8 @@ import mongoose, { ConnectOptions } from 'mongoose'
 import cors from 'cors'
 import jokeRoutes from './routes'
 
+require('dotenv').config()
+
 const app: Express = express()
 
 const PORT: string | number = process.env.PORT || 4000
@@ -15,8 +17,6 @@ const uri: string = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO
 const options = { useNewUrlParser: true, useUnifiedTopology: true }
 
 mongoose
-  //.connect(uri, options as ConnectOptions)
-  //.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true } as ConnectOptions)
   .connect(uri)
   .then(() =>
     app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`))
