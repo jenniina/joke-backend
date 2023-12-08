@@ -5,15 +5,15 @@ const quizSchema: Schema = new Schema(
     highscores: {
       easy: {
         score: { type: Number, default: 0 },
-        time: { type: Number, default: 0 },
+        time: { type: Number, default: 210 },
       },
       medium: {
         score: { type: Number, default: 0 },
-        time: { type: Number, default: 0 },
+        time: { type: Number, default: 210 },
       },
       hard: {
         score: { type: Number, default: 0 },
-        time: { type: Number, default: 0 },
+        time: { type: Number, default: 210 },
       },
     },
     user: {
