@@ -21,13 +21,53 @@ const getUserQuiz = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
+// const addQuiz = async (req: Request, res: Response): Promise<void> => {
+//   try {
+//     const body = req.body as Pick<IQuiz, 'highscores' | 'user'>
+
+//     const existingQuiz = (await Quiz.findOne({
+//       user: body.user,
+//     })) as IQuiz
+
+//     if (!existingQuiz) {
+//       const quiz = new Quiz({
+//         highscores: body.highscores,
+//         user: body.user,
+//       }) as IQuiz
+
+//       const newQuiz: IQuiz = await quiz.save()
+
+//       res.status(201).json({ message: 'Quiz added', quiz: newQuiz })
+//     } else if (!body.user) {
+//       res.status(400).json({ message: 'type and user fields are required' })
+//     } else {
+//       existingQuiz.highscores = body.highscores
+//       existingQuiz.user = body.user
+//       try {
+//         const updatedQuiz: IQuiz = await existingQuiz.save()
+//         res.status(200).json({ message: 'Quiz updated', quiz: updatedQuiz })
+//       } catch (validationError) {
+//         console.error(validationError)
+//         res.status(400).json({ message: 'Quiz not updated', error: validationError })
+//       }
+//     }
+//   } catch (error) {
+//     throw error
+//   }
+// }
+
 const addQuiz = async (req: Request, res: Response): Promise<void> => {
   try {
     const body = req.body as Pick<IQuiz, 'highscores' | 'user'>
 
-    const existingQuiz = (await Quiz.findOne({
+    const existingQuiz = await Quiz.findOne({
       user: body.user,
-    })) as IQuiz
+    })
+
+    if (!body.user) {
+      res.status(400).json({ message: 'user field is required' })
+      return
+    }
 
     if (!existingQuiz) {
       const quiz = new Quiz({
@@ -36,15 +76,11 @@ const addQuiz = async (req: Request, res: Response): Promise<void> => {
       }) as IQuiz
 
       const newQuiz: IQuiz = await quiz.save()
-
       res.status(201).json({ message: 'Quiz added', quiz: newQuiz })
-    } else if (!body.user) {
-      res.status(400).json({ message: 'type and user fields are required' })
     } else {
       existingQuiz.highscores = body.highscores
-      existingQuiz.user = body.user
       try {
-        const updatedQuiz: IQuiz = await existingQuiz.save()
+        const updatedQuiz = (await existingQuiz.save()) as IQuiz
         res.status(200).json({ message: 'Quiz updated', quiz: updatedQuiz })
       } catch (validationError) {
         console.error(validationError)
@@ -52,7 +88,8 @@ const addQuiz = async (req: Request, res: Response): Promise<void> => {
       }
     }
   } catch (error) {
-    throw error
+    console.error(error)
+    res.status(500).json({ message: 'Internal server error' })
   }
 }
 
