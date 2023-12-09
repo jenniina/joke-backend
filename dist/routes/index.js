@@ -52,6 +52,7 @@ router.delete('/api/jokes/:id/delete-user/:userId', jokes_1.deleteUserFromJoke);
 router.post('/api/quiz', quiz_1.addQuiz);
 router.put('/api/quiz', quiz_1.addQuiz);
 router.get('/api/quiz/:id', quiz_1.getUserQuiz);
+router.delete('/api/quiz/remove/:user', quiz_1.removeOldestDuplicate);
 router.get('/api/', (req, res) => {
     res.send('Nothing to see here');
 });

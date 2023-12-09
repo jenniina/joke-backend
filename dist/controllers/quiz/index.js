@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addQuiz = exports.getUserQuiz = exports.getQuizzes = void 0;
+exports.removeOldestDuplicate = exports.addQuiz = exports.getUserQuiz = exports.getQuizzes = void 0;
 const quiz_1 = require("../../models/quiz");
 const getQuizzes = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -65,13 +65,13 @@ exports.getUserQuiz = getUserQuiz;
 const addQuiz = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const body = req.body;
-        const existingQuiz = yield quiz_1.Quiz.findOne({
-            user: body.user,
-        });
         if (!body.user) {
             res.status(400).json({ message: 'user field is required' });
             return;
         }
+        const existingQuiz = yield quiz_1.Quiz.findOne({
+            user: body.user,
+        });
         if (!existingQuiz) {
             const quiz = new quiz_1.Quiz({
                 highscores: body.highscores,
@@ -98,3 +98,28 @@ const addQuiz = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.addQuiz = addQuiz;
+const removeOldestDuplicate = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { user } = req.params;
+        if (!user) {
+            res.status(400).json({ message: 'user field is required' });
+            return;
+        }
+        const existingQuiz = yield quiz_1.Quiz.find({
+            user: user,
+        }).sort({ createdAt: 1 });
+        if (existingQuiz.length > 1) {
+            const oldestQuiz = existingQuiz[0];
+            yield quiz_1.Quiz.deleteOne({ _id: oldestQuiz._id });
+            res.status(200).json({ message: 'Quiz deleted', quiz: oldestQuiz });
+        }
+        else {
+            res.status(200).json({ message: 'No duplicate found' });
+        }
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+exports.removeOldestDuplicate = removeOldestDuplicate;

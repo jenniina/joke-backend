@@ -60,14 +60,14 @@ const addQuiz = async (req: Request, res: Response): Promise<void> => {
   try {
     const body = req.body as Pick<IQuiz, 'highscores' | 'user'>
 
-    const existingQuiz = await Quiz.findOne({
-      user: body.user,
-    })
-
     if (!body.user) {
       res.status(400).json({ message: 'user field is required' })
       return
     }
+
+    const existingQuiz = await Quiz.findOne({
+      user: body.user,
+    })
 
     if (!existingQuiz) {
       const quiz = new Quiz({
@@ -86,6 +86,32 @@ const addQuiz = async (req: Request, res: Response): Promise<void> => {
         console.error(validationError)
         res.status(400).json({ message: 'Quiz not updated', error: validationError })
       }
+    }
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+const removeOldestDuplicate = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { user } = req.params as Pick<IQuiz, 'user'>
+
+    if (!user) {
+      res.status(400).json({ message: 'user field is required' })
+      return
+    }
+
+    const existingQuiz = await Quiz.find({
+      user: user,
+    }).sort({ createdAt: 1 })
+
+    if (existingQuiz.length > 1) {
+      const oldestQuiz = existingQuiz[0]
+      await Quiz.deleteOne({ _id: oldestQuiz._id })
+      res.status(200).json({ message: 'Quiz deleted', quiz: oldestQuiz })
+    } else {
+      res.status(200).json({ message: 'No duplicate found' })
     }
   } catch (error) {
     console.error(error)
@@ -120,4 +146,4 @@ const addQuiz = async (req: Request, res: Response): Promise<void> => {
 //   }
 // }
 
-export { getQuizzes, getUserQuiz, addQuiz }
+export { getQuizzes, getUserQuiz, addQuiz, removeOldestDuplicate }
