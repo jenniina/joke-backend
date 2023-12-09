@@ -46,7 +46,12 @@ import {
   getJokesByUsername,
   deleteUserFromJoke,
 } from '../controllers/jokes'
-import { getQuizzes, addQuiz, getUserQuiz } from '../controllers/quiz'
+import {
+  getQuizzes,
+  addQuiz,
+  getUserQuiz,
+  removeOldestDuplicate,
+} from '../controllers/quiz'
 
 const router = Router()
 
@@ -103,6 +108,7 @@ router.delete('/api/jokes/:id/delete-user/:userId', deleteUserFromJoke)
 router.post('/api/quiz', addQuiz)
 router.put('/api/quiz', addQuiz)
 router.get('/api/quiz/:id', getUserQuiz)
+router.delete('/api/quiz/remove/:user', removeOldestDuplicate)
 
 router.get('/api/', (req, res) => {
   res.send('Nothing to see here')
