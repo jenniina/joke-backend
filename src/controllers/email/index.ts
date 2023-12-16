@@ -52,8 +52,7 @@ export const sendEmailForm = async (req: Request, res: Response) => {
     Message: ${sanitizedMessage}
     Encouragement: ${sanitizedEncouragement}
     Color: ${req.body.color}
-    Dark: ${req.body.dark}
-    Light: ${req.body.light}
+    Preference: ${req.body.dark}${req.body.light}
     Select Multi: ${req.body.selectmulti}
     Clarification: ${sanitizedClarification}
     From: ${email}
@@ -78,6 +77,7 @@ export const sendEmailSelect = async (req: Request, res: Response) => {
   }
 
   const sanitizedMessage = sanitizeHtml(req.body.clarification)
+  const sanitizedEmail = sanitizeHtml(req.body.email)
   const { favoriteHero, issues } = req.body
 
   let transporter = nodemailer.createTransport({
@@ -92,11 +92,12 @@ export const sendEmailSelect = async (req: Request, res: Response) => {
   let mailOptions = {
     from: process.env.NODEMAILER_USER,
     to: process.env.NODEMAILER_USER,
-    subject: `Message from Select Page`,
+    subject: `Message from React Custom Select Page`,
     text: `
         Issues: ${issues}
         Favorite Hero Section: ${favoriteHero}
         Clarification: ${sanitizedMessage} 
+        Email: ${sanitizedEmail}
     `,
   }
 
