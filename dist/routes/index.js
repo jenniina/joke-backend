@@ -56,4 +56,23 @@ router.delete('/api/quiz/remove/:user', quiz_1.removeOldestDuplicate);
 router.get('/api/', (req, res) => {
     res.send('Nothing to see here');
 });
+const { body } = require('express-validator');
+const { sendEmailForm, sendEmailSelect } = require('../controllers/email');
+router.post('/api/send-email-form', [
+    body('firstName').trim().escape(),
+    body('lastName').trim().escape(),
+    body('email').isEmail(),
+    body('message').trim().escape(),
+    body('encouragement').trim().escape(),
+    body('color').trim().escape(),
+    body('dark').trim().escape(),
+    body('light').trim().escape(),
+    body('select').trim().escape(),
+    body('selectmulti').trim().escape(),
+], sendEmailForm);
+router.post('/api/send-email-select', [
+    body('issues').trim().escape(),
+    body('favoriteHero').trim().escape(),
+    body('clarification').trim().escape(),
+], sendEmailSelect);
 exports.default = router;
