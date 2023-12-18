@@ -117,3 +117,18 @@ export interface IQuizQuestion extends Document {
   createdAt?: string
   updatedAt?: string
 }
+
+export interface ITodo extends Document {
+  key: string
+  name: string
+  complete: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface ITodos extends Document {
+  user: IUser['_id']
+  todos: ITodo[]
+  createdAt?: string
+  updatedAt?: string
+}
