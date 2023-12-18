@@ -52,6 +52,14 @@ import {
   getUserQuiz,
   removeOldestDuplicate,
 } from '../controllers/quiz'
+import {
+  getTodos,
+  updateAllTodos,
+  addTodo,
+  deleteTodo,
+  editTodo,
+  clearCompletedTodos,
+} from '../controllers/todo'
 
 const router = Router()
 
@@ -109,6 +117,13 @@ router.post('/api/quiz', addQuiz)
 router.put('/api/quiz', addQuiz)
 router.get('/api/quiz/:id', getUserQuiz)
 router.delete('/api/quiz/remove/:user', removeOldestDuplicate)
+
+router.get('/api/todo/:user', getTodos)
+router.put('/api/todo/:user', updateAllTodos)
+router.post('/api/todo/:user', addTodo)
+router.delete('/api/todo/:user/:key', deleteTodo)
+router.put('/api/todo/:user/:key', editTodo)
+router.delete('/api/todo/:user', clearCompletedTodos)
 
 router.get('/api/', (req, res) => {
   res.send('Nothing to see here')
