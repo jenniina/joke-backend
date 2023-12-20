@@ -9,9 +9,36 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUserFromJoke = exports.getJokesByUserAndSafe = exports.getJokesByUserAndType = exports.getJokesByUserAndCategory = exports.getJokesByUserId = exports.getJokesByUsername = exports.findJokeByJokeIdLanguageCategoryType = exports.updateJoke = exports.addJoke = exports.getJokes = void 0;
+exports.deleteUserFromJoke = exports.getJokesByUserAndSafe = exports.getJokesByUserAndType = exports.getJokesByUserAndCategory = exports.getJokesByUserId = exports.findJokeByJokeIdLanguageCategoryType = exports.updateJoke = exports.addJoke = exports.getJokes = void 0;
 const types_1 = require("../../types");
 const joke_1 = require("../../models/joke");
+var ELanguage;
+(function (ELanguage) {
+    ELanguage["en"] = "en";
+    ELanguage["es"] = "es";
+    ELanguage["fr"] = "fr";
+    ELanguage["de"] = "de";
+    ELanguage["pt"] = "pt";
+    ELanguage["cs"] = "cs";
+})(ELanguage || (ELanguage = {}));
+var EError;
+(function (EError) {
+    EError["en"] = "An error occurred";
+    EError["es"] = "Ha ocurrido un error";
+    EError["fr"] = "Une erreur est survenue";
+    EError["de"] = "Ein Fehler ist aufgetreten";
+    EError["pt"] = "Ocorreu um erro";
+    EError["cs"] = "Do\u0161lo k chyb\u011B";
+})(EError || (EError = {}));
+var EAnErrorOccurredAddingTheJoke;
+(function (EAnErrorOccurredAddingTheJoke) {
+    EAnErrorOccurredAddingTheJoke["en"] = "An error occurred adding the joke";
+    EAnErrorOccurredAddingTheJoke["es"] = "Ha ocurrido un error al agregar la broma";
+    EAnErrorOccurredAddingTheJoke["fr"] = "Une erreur s'est produite lors de l'ajout de la blague";
+    EAnErrorOccurredAddingTheJoke["de"] = "Beim Hinzuf\u00FCgen des Witzes ist ein Fehler aufgetreten";
+    EAnErrorOccurredAddingTheJoke["pt"] = "Ocorreu um erro ao adicionar a piada";
+    EAnErrorOccurredAddingTheJoke["cs"] = "P\u0159i p\u0159id\u00E1v\u00E1n\u00ED vtipu do\u0161lo k chyb\u011B";
+})(EAnErrorOccurredAddingTheJoke || (EAnErrorOccurredAddingTheJoke = {}));
 const getJokes = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const jokes = yield joke_1.Joke.find();
@@ -32,10 +59,11 @@ const addJoke = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //Joke.collection.dropIndex('jokeId_1')
     try {
         const body = req.body;
-        // Validate input fields
-        if (!body.jokeId || !body.category || !body.user || !body.language) {
-            res.status(400).json({ message: 'Missing required fields' });
-        }
+        // // Validate input fields
+        // if (!body.jokeId || !body.category || !body.user || !body.language) {
+        //   res.status(400).json({ message: 'Missing required fields' })
+        //   return
+        // }
         let joke;
         // Check if a joke already exists
         const existingJoke = yield (body &&
@@ -48,7 +76,7 @@ const addJoke = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (existingJoke) {
             // Check if the user ID already exists in the user array
             if (!existingJoke.user.includes(req.body.user)) {
-                existingJoke.user.push(req.body.user);
+                existingJoke.user.push(req.body.user[0]);
                 yield existingJoke.save();
             }
             joke = mapToJoke(existingJoke);
@@ -61,7 +89,7 @@ const addJoke = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     category: body.category,
                     type: body.type,
                     safe: req.body.safe,
-                    user: [body.user],
+                    user: body.user,
                     language: body.language,
                 }).save();
                 joke = mapToJoke(savedJoke);
@@ -74,31 +102,36 @@ const addJoke = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     category: body.category,
                     type: body.type,
                     safe: req.body.safe,
-                    user: [body.user],
+                    user: body.user,
                     language: body.language,
                 }).save();
                 joke = mapToJoke(savedJoke);
             }
         }
-        res.status(201).json({ success: true, message: 'Joke added', data: joke });
+        res.status(201).json({ success: true, message: 'Joke added', joke });
     }
     catch (error) {
-        res.status(500).json({ success: false, message: 'An error occurred' });
         console.error('Error:', error);
+        res.status(500).json({
+            success: false,
+            message: EAnErrorOccurredAddingTheJoke[req.body.language] ||
+                'An error occurred adding the joke',
+        });
     }
 });
 exports.addJoke = addJoke;
 const updateJoke = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { params: { jokeId }, body, } = req;
+        const { params: { jokeId, language }, body, } = req;
         let joke;
-        const updateJoke = yield joke_1.Joke.findOneAndUpdate({ jokeId: jokeId }, body);
+        const updateJoke = yield joke_1.Joke.findOneAndUpdate({ jokeId, language }, body);
         joke = mapToJoke(updateJoke);
-        const allJokes = yield joke_1.Joke.find();
-        res.status(200).json({ message: 'Joke updated', joke, jokes: allJokes });
+        res.status(200).json({ message: 'Joke updated', joke });
     }
     catch (error) {
-        res.status(500).json({ message: 'An error occurred' });
+        res
+            .status(500)
+            .json({ message: EError[req.params.lang] || 'An error occurred' });
         console.error('Error:', error);
     }
 });
@@ -118,7 +151,9 @@ const deleteUserFromJoke = (req, res) => __awaiter(void 0, void 0, void 0, funct
         res.status(200).json({ message: 'User deleted from joke', joke });
     }
     catch (error) {
-        res.status(500).json({ message: 'An error occurred' });
+        res
+            .status(500)
+            .json({ message: EError[req.params.lang] || 'An error occurred' });
         console.error('Error:', error);
     }
 });
@@ -140,7 +175,7 @@ exports.deleteUserFromJoke = deleteUserFromJoke;
 //     res.status(200).json({ message: 'User deleted from joke', joke })
 //   } catch (error) {
 //     console.error('Error:', error)
-//     res.status(500).json({ message: 'An error occurred' })
+//     res.status(500).json({ message: EError[language as ELanguage] })
 //   }
 // }
 const findJokeByJokeIdLanguageCategoryType = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -154,22 +189,24 @@ const findJokeByJokeIdLanguageCategoryType = (req, res) => __awaiter(void 0, voi
         res.status(200).json(joke);
     }
     catch (error) {
-        res.status(500).json({ message: 'An error occurred' });
+        res
+            .status(500)
+            .json({ message: EError[req.params.language] || 'An error occurred' });
         console.error('Error:', error);
     }
 });
 exports.findJokeByJokeIdLanguageCategoryType = findJokeByJokeIdLanguageCategoryType;
-const getJokesByUsername = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const jokes = yield joke_1.Joke.findOne({ user: req.params.username });
-        res.status(200).json({ jokes });
-    }
-    catch (error) {
-        res.status(500).json({ message: 'An error occurred' });
-        console.error('Error:', error);
-    }
-});
-exports.getJokesByUsername = getJokesByUsername;
+// const getJokesByUsername = async (req: Request, res: Response): Promise<void> => {
+//   try {
+//     const jokes: IJoke[] | null = await Joke.findOne({ user: req.params.username })
+//     res.status(200).json({ jokes })
+//   } catch (error) {
+//     res
+//       .status(500)
+//       .json({ message: EError[language as ELanguage] || 'An error occurred' })
+//     console.error('Error:', error)
+//   }
+// }
 const getJokesByUserId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const jokes = yield joke_1.Joke.findOne({ user: req.params.id });
@@ -189,7 +226,9 @@ const getJokesByUserAndCategory = (req, res) => __awaiter(void 0, void 0, void 0
         res.status(200).json({ jokes });
     }
     catch (error) {
-        res.status(500).json({ message: 'An error occurred' });
+        res
+            .status(500)
+            .json({ message: EError[req.params.language] || 'An error occurred' });
         console.error('Error:', error);
     }
 });
@@ -203,7 +242,9 @@ const getJokesByUserAndType = (req, res) => __awaiter(void 0, void 0, void 0, fu
         res.status(200).json({ jokes });
     }
     catch (error) {
-        res.status(500).json({ message: 'An error occurred' });
+        res
+            .status(500)
+            .json({ message: EError[req.params.language] || 'An error occurred' });
         console.error('Error:', error);
     }
 });
@@ -217,7 +258,9 @@ const getJokesByUserAndSafe = (req, res) => __awaiter(void 0, void 0, void 0, fu
         res.status(200).json({ jokes });
     }
     catch (error) {
-        res.status(500).json({ message: 'An error occurred' });
+        res
+            .status(500)
+            .json({ message: EError[req.params.language] || 'An error occurred' });
         console.error('Error:', error);
     }
 });

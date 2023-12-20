@@ -6,7 +6,7 @@ const userSchema: Schema = new Schema(
     username: {
       type: String,
       required: true,
-      unique: true,
+      //unique: true,
       minlength: 3,
     },
     name: {
@@ -28,6 +28,21 @@ const userSchema: Schema = new Schema(
       type: Boolean,
       required: true,
       default: false,
+    },
+    role: {
+      type: Number,
+      required: true,
+      default: 1,
+      max: 3,
+      min: 1,
+    },
+    token: {
+      type: String,
+      required: false,
+    },
+    resetToken: {
+      type: String,
+      required: false,
     },
   },
   { timestamps: true }

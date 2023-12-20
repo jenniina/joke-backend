@@ -2,10 +2,13 @@ import { Document } from 'mongoose'
 
 export interface IUser extends Document {
   _id?: string
+  name: string
   username: string
   password: string
   language: ELanguages
   verified?: boolean
+  token?: string
+  resetToken?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -79,10 +82,12 @@ export interface IJokeTwoPart extends IJokeCommonFields {
 export type IJoke = IJokeSingle | IJokeTwoPart
 
 export interface ITokenPayload {
-  userId: string
+  userId: string | undefined
+  iat?: number
+  exp?: number
 }
 export interface IToken {
-  token: string
+  token: string | undefined
   createdAt: Date
 }
 
@@ -131,4 +136,30 @@ export interface ITodos extends Document {
   todos: ITodo[]
   createdAt?: string
   updatedAt?: string
+}
+
+export enum ELanguage {
+  en = 'en',
+  es = 'es',
+  fr = 'fr',
+  de = 'de',
+  pt = 'pt',
+  cs = 'cs',
+}
+export enum EError {
+  en = 'An error occurred',
+  es = 'Ha ocurrido un error',
+  fr = 'Une erreur est survenue',
+  de = 'Ein Fehler ist aufgetreten',
+  pt = 'Ocorreu um erro',
+  cs = 'Došlo k chybě',
+}
+
+export enum EAnErrorOccurredAddingTheJoke {
+  en = 'An error occurred adding the joke',
+  es = 'Ha ocurrido un error al agregar la broma',
+  fr = "Une erreur s'est produite lors de l'ajout de la blague",
+  de = 'Beim Hinzufügen des Witzes ist ein Fehler aufgetreten',
+  pt = 'Ocorreu um erro ao adicionar a piada',
+  cs = 'Při přidávání vtipu došlo k chybě',
 }

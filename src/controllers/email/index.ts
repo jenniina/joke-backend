@@ -1,3 +1,5 @@
+import { Request, Response } from 'express'
+import { generateToken } from '../users'
 export type FormData = {
   firstName: string
   lastName: string
@@ -17,7 +19,7 @@ export type SelectData = {
   favoriteHero: string
   clarification: string
 }
-import { Request, Response } from 'express'
+
 const { validationResult } = require('express-validator')
 const sanitizeHtml = require('sanitize-html')
 const nodemailer = require('nodemailer')
@@ -35,8 +37,8 @@ export const sendEmailForm = async (req: Request, res: Response) => {
   const { firstName, lastName, email } = req.body
 
   let transporter = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 587,
+    host: process.env.NODEMAILER_HOST,
+    port: process.env.NODEMAILER_PORT,
     auth: {
       user: process.env.NODEMAILER_USER,
       pass: process.env.NODEMAILER_PASSWORD,
@@ -99,6 +101,43 @@ export const sendEmailSelect = async (req: Request, res: Response) => {
         Clarification: ${sanitizedMessage} 
         Email: ${sanitizedEmail}
     `,
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    res.status(200).send('Email sent')
+  } catch (error) {
+    console.log(error)
+    res.status(500).send('Error sending email')
+  }
+}
+
+export const sendVerificationLink = async (req: Request, res: Response) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    console.log(errors)
+    return res.status(400).json({ errors: errors.array() })
+  }
+  const { email } = req.body
+  const token = generateToken(email)
+
+  let transporter = nodemailer.createTransport({
+    host: 'smtp-relay.brevo.com',
+    port: 587,
+    auth: {
+      user: process.env.NODEMAILER_USER,
+      pass: process.env.NODEMAILER_PASSWORD,
+    },
+  })
+
+  let mailOptions = {
+    from: process.env.NODEMAILER_USER,
+    to: email,
+    subject: `Verify your email address for jenniina.fi`,
+    text: `
+            Click the link below to verify your email address.
+            ${process.env.SITE_URL}/verify/${token}
+        `,
   }
 
   try {
