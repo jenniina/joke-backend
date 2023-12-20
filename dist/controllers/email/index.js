@@ -9,7 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendEmailSelect = exports.sendEmailForm = void 0;
+exports.sendVerificationLink = exports.sendEmailSelect = exports.sendEmailForm = void 0;
+const users_1 = require("../users");
 const { validationResult } = require('express-validator');
 const sanitizeHtml = require('sanitize-html');
 const nodemailer = require('nodemailer');
@@ -24,8 +25,8 @@ const sendEmailForm = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     const sanitizedClarification = sanitizeHtml(req.body.clarification);
     const { firstName, lastName, email } = req.body;
     let transporter = nodemailer.createTransport({
-        host: 'smtp-relay.brevo.com',
-        port: 587,
+        host: process.env.NODEMAILER_HOST,
+        port: process.env.NODEMAILER_PORT,
         auth: {
             user: process.env.NODEMAILER_USER,
             pass: process.env.NODEMAILER_PASSWORD,
@@ -95,3 +96,38 @@ const sendEmailSelect = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.sendEmailSelect = sendEmailSelect;
+const sendVerificationLink = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(errors);
+        return res.status(400).json({ errors: errors.array() });
+    }
+    const { email } = req.body;
+    const token = (0, users_1.generateToken)(email);
+    let transporter = nodemailer.createTransport({
+        host: 'smtp-relay.brevo.com',
+        port: 587,
+        auth: {
+            user: process.env.NODEMAILER_USER,
+            pass: process.env.NODEMAILER_PASSWORD,
+        },
+    });
+    let mailOptions = {
+        from: process.env.NODEMAILER_USER,
+        to: email,
+        subject: `Verify your email address for jenniina.fi`,
+        text: `
+            Click the link below to verify your email address.
+            ${process.env.SITE_URL}/verify/${token}
+        `,
+    };
+    try {
+        yield transporter.sendMail(mailOptions);
+        res.status(200).send('Email sent');
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).send('Error sending email');
+    }
+});
+exports.sendVerificationLink = sendVerificationLink;
