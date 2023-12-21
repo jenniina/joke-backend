@@ -456,7 +456,7 @@ const updateUsername = async (req: Request, res: Response): Promise<void> => {
       // Prepare email details
       const subject = EEmailConfirmation[(user.language as unknown as ELanguage) || 'en']
       const message = EConfirmEmail[(user.language as unknown as ELanguage) || 'en']
-      const link = `${process.env.SITE_URL}/api/users/${username}/confirm-email/${token}?lang=${user.language}`
+      const link = `${process.env.BASE_URI}/api/users/${username}/confirm-email/${token}?lang=${user.language}`
       const language = (user.language as unknown as ELanguage) || 'en'
       // Send confirmation email to new address
       await sendMail(subject, message, username, language, link)
@@ -561,7 +561,7 @@ const confirmEmail = async (req: Request, res: Response): Promise<void> => {
             ELogInAtTheAppOrRequestANewEmailConfirmToken[(language as ELanguage) || 'en']
           }</p> 
           <p>
-          <a href=${process.env.SITE_URL}>${
+          <a href=${process.env.BASE_URI}>${
         EBackToTheApp[language as ELanguage] ?? 'Back to the app'
       }</a>
           </p>
@@ -619,7 +619,7 @@ const confirmEmail = async (req: Request, res: Response): Promise<void> => {
             <h2>${EEmailConfirmed[(language as ELanguage) || 'en']}</h2>
             <p>${EEmailHasBeenConfirmed[(language as ELanguage) || 'en']}</p>
             <p>
-            <a href=${process.env.SITE_URL}>${
+            <a href=${process.env.BASE_URI}>${
         EBackToTheApp[(language as ELanguage) || 'en']
       }</a>
             </p>
@@ -867,7 +867,7 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
       //const token = jwt.sign(userId, secret, { expiresIn: '1d' })
       //const token = '1234567890'
       const token = generateToken(user._id)
-      const link = `${process.env.SITE_URL}/api/users/reset/${token}?lang=${language}`
+      const link = `${process.env.BASE_URI}/api/users/reset/${token}?lang=${language}`
       //User.findOneAndUpdate({ username }, { $set: { resetToken: token } })
       await User.findOneAndUpdate({ username }, { resetToken: token })
       sendMail(
@@ -1041,7 +1041,7 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
               //       })
               // } else {
               const token = generateToken(newUser._id)
-              const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${language}`
+              const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`
               newUser.token = token
 
               sendMail(
@@ -1182,7 +1182,7 @@ const refreshExpiredToken = async (
             } else {
               token = generateToken(_id)
               if (!user?.verified) {
-                const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${body.language}`
+                const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`
                 sendMail(
                   EHelloWelcome[body.language as keyof typeof EHelloWelcome],
                   EEmailMessage[body.language as keyof typeof EEmailMessage],
@@ -1264,7 +1264,7 @@ const refreshExpiredToken = async (
               //     } else {
               user.token = token
 
-              const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${req.body.language}`
+              const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${req.body.language}`
               user
                 .save()
                 .then(() => {
@@ -1356,7 +1356,7 @@ const refreshExpiredToken = async (
 //         } else {
 //           user.token = token
 
-//           const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${body.language}`
+//           const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`
 
 //           user
 //             .save()
@@ -1478,7 +1478,7 @@ const requestNewToken = async (req: Request, res: Response): Promise<void> => {
 
 //       const token = jwt.sign({ userId: newUser._id }, secret, { expiresIn: '1d' })
 
-//       const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${language}`
+//       const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`
 
 //       newUser.token = token
 
@@ -1633,7 +1633,7 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
           'Account successfully verified'
         }.</p>
         <p>
-        <a href=${process.env.SITE_URL}>${
+        <a href=${process.env.BASE_URI}>${
         EBackToTheApp[language as ELanguage] ?? 'Back to the app'
       }</a>
         </p>
@@ -1696,7 +1696,7 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
       <div>
         <h1>${EVerificationFailed[language as ELanguage]}</p>
         <p>
-        <a href=${process.env.SITE_URL}>${
+        <a href=${process.env.BASE_URI}>${
         EBackToTheApp[language as ELanguage] ?? 'Back to the app'
       }</a>
         </p>
@@ -1782,7 +1782,7 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
 //         <h1>${EVerificationSuccessful[language as ELanguage]}</h1>
 //         <p>${EAccountSuccessfullyVerified}.</p>
 //         <p>
-//         <a href=${process.env.SITE_URL}>${EBackToTheApp[language as ELanguage]}</a>
+//         <a href=${process.env.BASE_URI}>${EBackToTheApp[language as ELanguage]}</a>
 //         </p>
 //       </div>
 //       </body>
@@ -1885,7 +1885,7 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
           'Check the app to request a new password reset token. '
         }</p> 
         <p>
-        <a href=${process.env.SITE_URL}>${
+        <a href=${process.env.BASE_URI}>${
         EBackToTheApp[language as ELanguage] ?? 'Back to the app'
       }</a>
         </p>
@@ -2193,7 +2193,7 @@ const resetPasswordToken = async (req: Request, res: Response): Promise<void> =>
           ] || 'Password reset successfully'
         }</h1>
         <p>
-        <a href=${process.env.SITE_URL}>${
+        <a href=${process.env.BASE_URI}>${
             EBackToTheApp[language as ELanguage] ?? 'Back to the app'
           }</a>
         </p>

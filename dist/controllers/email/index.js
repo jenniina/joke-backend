@@ -118,7 +118,7 @@ const sendVerificationLink = (req, res) => __awaiter(void 0, void 0, void 0, fun
         subject: `Verify your email address for jenniina.fi`,
         text: `
             Click the link below to verify your email address.
-            ${process.env.SITE_URL}/verify/${token}
+            ${process.env.BASE_URI}/verify/${token}
         `,
     };
     try {

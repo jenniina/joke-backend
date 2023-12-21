@@ -485,7 +485,7 @@ const updateUsername = (req, res) => __awaiter(void 0, void 0, void 0, function*
             // Prepare email details
             const subject = EEmailConfirmation[user.language || 'en'];
             const message = EConfirmEmail[user.language || 'en'];
-            const link = `${process.env.SITE_URL}/api/users/${username}/confirm-email/${token}?lang=${user.language}`;
+            const link = `${process.env.BASE_URI}/api/users/${username}/confirm-email/${token}?lang=${user.language}`;
             const language = user.language || 'en';
             // Send confirmation email to new address
             yield sendMail(subject, message, username, language, link);
@@ -590,7 +590,7 @@ const confirmEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* (
           </h1>
           <p>${ELogInAtTheAppOrRequestANewEmailConfirmToken[language || 'en']}</p> 
           <p>
-          <a href=${process.env.SITE_URL}>${(_c = EBackToTheApp[language]) !== null && _c !== void 0 ? _c : 'Back to the app'}</a>
+          <a href=${process.env.BASE_URI}>${(_c = EBackToTheApp[language]) !== null && _c !== void 0 ? _c : 'Back to the app'}</a>
           </p>
         </div>
       </body>
@@ -646,7 +646,7 @@ const confirmEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             <h2>${EEmailConfirmed[language || 'en']}</h2>
             <p>${EEmailHasBeenConfirmed[language || 'en']}</p>
             <p>
-            <a href=${process.env.SITE_URL}>${EBackToTheApp[language || 'en']}</a>
+            <a href=${process.env.BASE_URI}>${EBackToTheApp[language || 'en']}</a>
             </p>
           </div>
         </body>
@@ -896,7 +896,7 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
             //const token = jwt.sign(userId, secret, { expiresIn: '1d' })
             //const token = '1234567890'
             const token = generateToken(user._id);
-            const link = `${process.env.SITE_URL}/api/users/reset/${token}?lang=${language}`;
+            const link = `${process.env.BASE_URI}/api/users/reset/${token}?lang=${language}`;
             //User.findOneAndUpdate({ username }, { $set: { resetToken: token } })
             yield user_1.User.findOneAndUpdate({ username }, { resetToken: token });
             sendMail(EPasswordReset[language], EResetPassword[language], username, language, link)
@@ -1051,7 +1051,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     //       })
                     // } else {
                     const token = generateToken(newUser._id);
-                    const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${language}`;
+                    const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`;
                     newUser.token = token;
                     sendMail(EHelloWelcome[language], EEmailMessage[language], username, language, link)
                         .then((result) => {
@@ -1160,7 +1160,7 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                     else {
                         token = generateToken(_id);
                         if (!(user === null || user === void 0 ? void 0 : user.verified)) {
-                            const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${body.language}`;
+                            const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`;
                             sendMail(EHelloWelcome[body.language], EEmailMessage[body.language], body.username, body.language, link)
                                 .then((r) => {
                                 reject({
@@ -1222,7 +1222,7 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                         //       })
                         //     } else {
                         user.token = token;
-                        const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${req.body.language}`;
+                        const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${req.body.language}`;
                         user
                             .save()
                             .then(() => {
@@ -1293,7 +1293,7 @@ exports.refreshExpiredToken = refreshExpiredToken;
 //           }
 //         } else {
 //           user.token = token
-//           const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${body.language}`
+//           const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`
 //           user
 //             .save()
 //             .then(() =>
@@ -1411,7 +1411,7 @@ exports.requestNewToken = requestNewToken;
 //       }
 //       const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
 //       const token = jwt.sign({ userId: newUser._id }, secret, { expiresIn: '1d' })
-//       const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${language}`
+//       const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`
 //       newUser.token = token
 //       const sendMail = (): Promise<any> => {
 //         return new Promise((resolve, reject) => {
@@ -1553,7 +1553,7 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
         <h1>${(_h = EVerificationSuccessful[language]) !== null && _h !== void 0 ? _h : 'Verification successful'}</h1>
         <p>${(_j = EAccountSuccessfullyVerified[language]) !== null && _j !== void 0 ? _j : 'Account successfully verified'}.</p>
         <p>
-        <a href=${process.env.SITE_URL}>${(_k = EBackToTheApp[language]) !== null && _k !== void 0 ? _k : 'Back to the app'}</a>
+        <a href=${process.env.BASE_URI}>${(_k = EBackToTheApp[language]) !== null && _k !== void 0 ? _k : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -1614,7 +1614,7 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
       <div>
         <h1>${EVerificationFailed[language]}</p>
         <p>
-        <a href=${process.env.SITE_URL}>${(_l = EBackToTheApp[language]) !== null && _l !== void 0 ? _l : 'Back to the app'}</a>
+        <a href=${process.env.BASE_URI}>${(_l = EBackToTheApp[language]) !== null && _l !== void 0 ? _l : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -1695,7 +1695,7 @@ exports.verifyEmailToken = verifyEmailToken;
 //         <h1>${EVerificationSuccessful[language as ELanguage]}</h1>
 //         <p>${EAccountSuccessfullyVerified}.</p>
 //         <p>
-//         <a href=${process.env.SITE_URL}>${EBackToTheApp[language as ELanguage]}</a>
+//         <a href=${process.env.BASE_URI}>${EBackToTheApp[language as ELanguage]}</a>
 //         </p>
 //       </div>
 //       </body>
@@ -1796,7 +1796,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         <p>${ELogInAtTheAppOrRequestANewPasswordResetToken[language] ||
                 'Check the app to request a new password reset token. '}</p> 
         <p>
-        <a href=${process.env.SITE_URL}>${(_m = EBackToTheApp[language]) !== null && _m !== void 0 ? _m : 'Back to the app'}</a>
+        <a href=${process.env.BASE_URI}>${(_m = EBackToTheApp[language]) !== null && _m !== void 0 ? _m : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -2086,7 +2086,7 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
       <div>
         <h1>${EPasswordResetSuccessfully[language] || 'Password reset successfully'}</h1>
         <p>
-        <a href=${process.env.SITE_URL}>${(_x = EBackToTheApp[language]) !== null && _x !== void 0 ? _x : 'Back to the app'}</a>
+        <a href=${process.env.BASE_URI}>${(_x = EBackToTheApp[language]) !== null && _x !== void 0 ? _x : 'Back to the app'}</a>
         </p>
       </div>
       </body>
