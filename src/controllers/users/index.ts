@@ -54,6 +54,14 @@ enum ETheComediansCompanion {
   pt = 'O Companheiro do Comediante',
   cs = 'Společník komika',
 }
+enum EJenniinaFi {
+  en = 'Jenniina.fi React Site',
+  es = 'Sitio React Jenniina.fi',
+  fr = 'Site React Jenniina.fi',
+  de = 'Jenniina.fi React Site',
+  pt = 'Site React Jenniina.fi',
+  cs = 'Jenniina.fi React Site',
+}
 enum EBackToTheApp {
   en = 'Back to the App',
   es = 'Volver a la aplicación',
@@ -410,6 +418,223 @@ const addUser = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
+const updateUsername = async (req: Request, res: Response): Promise<void> => {
+  enum EEmailConfirmation {
+    en = 'Email Confirmation, Jenniina.fi',
+    es = 'Confirmación de correo electrónico, Jenniina.fi',
+    fr = 'Confirmation de l email, Jenniina.fi',
+    de = 'E-Mail-Bestätigung, Jenniina.fi',
+    pt = 'Confirmação de email, Jenniina.fi',
+    cs = 'Potvrzení e-mailu, Jenniina.fi',
+  }
+  enum EConfirmEmail {
+    en = 'Please confirm your email address by clicking the link',
+    es = 'Por favor confirme su dirección de correo electrónico haciendo clic en el enlace',
+    fr = 'Veuillez confirmer votre adresse email en cliquant sur le lien',
+    de = 'Bitte bestätigen Sie Ihre E-Mail-Adresse, indem Sie auf den Link klicken',
+    pt = 'Por favor, confirme seu endereço de email clicando no link',
+    cs = 'Potvrďte svou e-mailovou adresu kliknutím na odkaz',
+  }
+  enum EUpdatePending {
+    en = 'Username update pending, please check your email for a confirmation link.',
+    es = 'Actualización de nombre de usuario pendiente, por favor revise su correo electrónico para obtener un enlace de confirmación.',
+    fr = 'Mise à jour du nom d utilisateur en attente, veuillez vérifier votre email pour un lien de confirmation.',
+    de = 'Benutzername Update ausstehend, bitte überprüfen Sie Ihre E-Mail für einen Bestätigungslink.',
+    pt = 'Atualização do nome de usuário pendente, verifique seu email para um link de confirmação.',
+    cs = 'Aktualizace uživatelského jména čeká, zkontrolujte svůj e-mail na potvrzovací odkaz.',
+  }
+  try {
+    const { body } = req
+    const { _id, username } = body
+    const user = await User.findById(_id)
+    if (user) {
+      const token = generateToken(user._id)
+      user.set('confirmToken', token)
+      user.markModified('verified')
+      await user.save()
+
+      // Prepare email details
+      const subject = EEmailConfirmation[(user.language as unknown as ELanguage) || 'en']
+      const message = EConfirmEmail[(user.language as unknown as ELanguage) || 'en']
+      const link = `${process.env.SITE_URL}/api/users/${username}/confirm-email/${token}?lang=${user.language}`
+      const language = (user.language as unknown as ELanguage) || 'en'
+      // Send confirmation email to new address
+      await sendMail(subject, message, username, language, link)
+
+      res.status(200).json({
+        success: true,
+        message: EUpdatePending[user.language || 'en'],
+      })
+    } else {
+      res.status(404).json({
+        success: false,
+        message: 'User not found',
+      })
+    }
+  } catch (error) {
+    console.error('Error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while updating the username',
+    })
+  }
+}
+
+const confirmEmail = async (req: Request, res: Response): Promise<void> => {
+  enum EEmailConfirmed {
+    en = 'Email Confirmed',
+    es = 'Correo electrónico confirmado',
+    fr = 'Email confirmé',
+    de = 'E-Mail bestätigt',
+    pt = 'Email confirmado',
+    cs = 'E-mail potvrzeno',
+  }
+  enum EEmailHasBeenConfirmed {
+    en = 'Your email has been confirmed.',
+    es = 'Tu correo electrónico ha sido confirmado.',
+    fr = 'Votre email a été confirmé.',
+    de = 'Ihre E-Mail wurde bestätigt.',
+    pt = 'Seu email foi confirmado.',
+    cs = 'Váš e-mail byl potvrzen.',
+  }
+  enum ELogInAtTheAppOrRequestANewEmailConfirmToken {
+    en = 'If your email (username) has not been changed, please check the app to request a new email confirmation token.',
+    es = 'Si su correo electrónico (nombre de usuario) no ha cambiado, verifique la aplicación para solicitar un nuevo token de confirmación de correo electrónico.',
+    fr = 'Si votre email (nom d utilisateur) n a pas été modifié, veuillez vérifier l application pour demander un nouveau jeton de confirmation d email.',
+    de = 'Wenn Ihre E-Mail (Benutzername) nicht geändert wurde, überprüfen Sie bitte die App, um einen neuen E-Mail-Bestätigungstoken anzufordern.',
+    pt = 'Se seu email (nome de usuário) não foi alterado, verifique o aplicativo para solicitar um novo token de confirmação de email.',
+    cs = 'Pokud se e-mail (uživatelské jméno) nezměnil, zkontrolujte aplikaci, zda požádáte o nový token pro potvrzení e-mailu.',
+  }
+
+  const { token, username } = req.params
+  const language = req.query.lang || 'en'
+
+  try {
+    // Validate the token
+    const user = await User.findOneAndUpdate({ confirmToken: token }, { username })
+
+    if (!user) {
+      res.send(`
+      <!DOCTYPE html>
+      <html lang=${language}>
+      <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style> 
+      @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Oswald:wght@500;600&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
+        body {
+          font-family: Lato, Helvetica, Arial, sans-serif;
+          background-color: hsl(219, 100%, 10%);
+          color: white;
+          letter-spacing: -0.03em;
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          min-height: 100vh;
+        }
+        body > div {
+          margin: 0 auto;
+          max-width: 800px;  
+        }
+        h1 {
+          font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
+          text-align: center;
+        }
+        p {
+          font-size: 18px;
+          text-align: center;
+        }
+        a {
+          color: white;
+        }
+      </style>
+      <title>
+      ${EJenniinaFi[(language as ELanguage) || 'en']}</title>
+      </head>
+      <body>
+        <div>
+          <h1>
+            ${EInvalidOrMissingToken[language as ELanguage] || 'Invalid or expired token'}
+          </h1>
+          <p>${
+            ELogInAtTheAppOrRequestANewEmailConfirmToken[(language as ELanguage) || 'en']
+          }</p> 
+          <p>
+          <a href=${process.env.SITE_URL}>${
+        EBackToTheApp[language as ELanguage] ?? 'Back to the app'
+      }</a>
+          </p>
+        </div>
+      </body>
+      </html>
+      `)
+    } else if (user) {
+      user.verified = true
+      user.confirmToken = undefined
+      user.markModified('verified')
+      user.markModified('confirmToken')
+      await user.save()
+
+      const htmlResponse = `
+      <html lang=${language ?? 'en'}>
+      <head> 
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style> 
+        @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Oswald:wght@500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
+          body {
+            font-family: Lato, Helvetica, Arial, sans-serif;
+            background-color: hsl(219, 100%, 10%);
+            color: white;
+            letter-spacing: -0.03em;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height: 100vh;
+          }
+          body > div {
+            margin: 0 auto;
+            max-width: 800px;  
+          }
+          h1, h2 {
+            font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
+            text-align: center;
+          }
+          p {
+            font-size: 18px;
+            text-align: center;
+          }
+          a {
+            color: white;
+          }
+        </style>
+        <title>
+        ${EJenniinaFi[(language as ELanguage) || 'en']}</title>
+      </head>
+        <body>
+          <div>
+            <h1>${EJenniinaFi[(language as ELanguage) || 'en']}</h1>
+            <h2>${EEmailConfirmed[(language as ELanguage) || 'en']}</h2>
+            <p>${EEmailHasBeenConfirmed[(language as ELanguage) || 'en']}</p>
+            <p>
+            <a href=${process.env.SITE_URL}>${
+        EBackToTheApp[(language as ELanguage) || 'en']
+      }</a>
+            </p>
+          </div>
+        </body>
+      </html>
+      `
+      res.send(htmlResponse)
+    }
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, message: 'Internal Server Error *' })
+  }
+}
+
 const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
@@ -489,13 +714,6 @@ const comparePassword = async (
   }
   try {
     const { _id, passwordOld, language } = req.body
-    const { password } = req.body
-    console.log('PASSWORD', password)
-    if (!password) {
-      next()
-      return
-    }
-    console.log('req.body', req.body)
     const user: IUser | null = await User.findById(_id)
 
     // if (!user) {
@@ -1403,9 +1621,7 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
           }
         </style>
         <title>
-        ${
-          ETheComediansCompanion[language as ELanguage] ?? "The Comedian' Companion"
-        }</title>
+        ${EJenniinaFi[(language as ELanguage) || 'en']}</title>
       </head>
       <body>
       <div>
@@ -1417,9 +1633,9 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
           'Account successfully verified'
         }.</p>
         <p>
-        <a href="https://react-az.jenniina.fi">${
-          EBackToTheApp[language as ELanguage] ?? 'Back to the app'
-        }</a>
+        <a href=${process.env.SITE_URL}>${
+        EBackToTheApp[language as ELanguage] ?? 'Back to the app'
+      }</a>
         </p>
       </div>
       </body>
@@ -1480,9 +1696,9 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
       <div>
         <h1>${EVerificationFailed[language as ELanguage]}</p>
         <p>
-        <a href="https://react-az.jenniina.fi">${
-          EBackToTheApp[language as ELanguage] ?? 'Back to the app'
-        }</a>
+        <a href=${process.env.SITE_URL}>${
+        EBackToTheApp[language as ELanguage] ?? 'Back to the app'
+      }</a>
         </p>
       </div>
       </body>
@@ -1559,14 +1775,14 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
 //             font-size: 18px;
 //           }
 //         </style>
-//         <title>${ETheComediansCompanion[language as ELanguage]}</title>
+//         <title>${EJenniinaFi[language as ELanguage || 'en']}</title>
 //       </head>
 //       <body>
 //       <div>
 //         <h1>${EVerificationSuccessful[language as ELanguage]}</h1>
 //         <p>${EAccountSuccessfullyVerified}.</p>
 //         <p>
-//         <a href="https://react-az.jenniina.fi">${EBackToTheApp[language as ELanguage]}</a>
+//         <a href=${process.env.SITE_URL}>${EBackToTheApp[language as ELanguage]}</a>
 //         </p>
 //       </div>
 //       </body>
@@ -1657,9 +1873,7 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
           }
         </style>
         <title>
-        ${
-          ETheComediansCompanion[language as ELanguage] ?? "The Comedian' Companion"
-        }</title>
+        ${EJenniinaFi[(language as ELanguage) || 'en']}</title>
       </head>
       <body>
       <div>
@@ -1671,9 +1885,9 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
           'Check the app to request a new password reset token. '
         }</p> 
         <p>
-        <a href="https://react-az.jenniina.fi">${
-          EBackToTheApp[language as ELanguage] ?? 'Back to the app'
-        }</a>
+        <a href=${process.env.SITE_URL}>${
+        EBackToTheApp[language as ELanguage] ?? 'Back to the app'
+      }</a>
         </p>
       </div>
       </body>
@@ -1753,13 +1967,11 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
           }
         </style>
         <title>
-        ${
-          ETheComediansCompanion[language as ELanguage] ?? "The Comedian' Companion"
-        }</title>
+        ${EJenniinaFi[(language as ELanguage) || 'en']}</title>
       </head>
       <body>
       <div>
-        <h1>${ETheComediansCompanion[language as ELanguage] ?? "The Comedian's Companion"}
+        <h1>${EJenniinaFi[(language as ELanguage) || 'en']}
         </h1>
         <h2>${EPasswordReset[language as ELanguage] ?? 'Password Reset'}</h2>
         <form action="/api/users/reset/${token}?lang=${language}" method="post">
@@ -1893,9 +2105,7 @@ const resetPasswordToken = async (req: Request, res: Response): Promise<void> =>
           }
         </style>
         <title>
-        ${
-          ETheComediansCompanion[language as ELanguage] ?? "The Comedian' Companion"
-        }</title>
+        ${EJenniinaFi[(language as ELanguage) || 'en']}</title>
       </head>
       <body>
       <div>
@@ -1973,9 +2183,7 @@ const resetPasswordToken = async (req: Request, res: Response): Promise<void> =>
           }
         </style>
         <title>
-        ${
-          ETheComediansCompanion[language as ELanguage] ?? "The Comedian' Companion"
-        }</title>
+        ${EJenniinaFi[(language as ELanguage) || 'en']}</title>
       </head>
       <body>
       <div>
@@ -1985,9 +2193,9 @@ const resetPasswordToken = async (req: Request, res: Response): Promise<void> =>
           ] || 'Password reset successfully'
         }</h1>
         <p>
-        <a href="https://react-az.jenniina.fi">${
-          EBackToTheApp[language as ELanguage] ?? 'Back to the app'
-        }</a>
+        <a href=${process.env.SITE_URL}>${
+            EBackToTheApp[language as ELanguage] ?? 'Back to the app'
+          }</a>
         </p>
       </div>
       </body>
@@ -2119,6 +2327,8 @@ export {
   getUsers,
   getUser,
   addUser,
+  confirmEmail,
+  updateUsername,
   updateUser,
   deleteUser,
   loginUser,

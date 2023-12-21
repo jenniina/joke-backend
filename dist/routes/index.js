@@ -15,6 +15,8 @@ router.get('/api/users', [users_1.authenticateUser, users_1.checkIfAdmin, users_
 router.get('/api/users/:id', users_1.getUser);
 //router.post('/api/users', addUser)
 router.put('/api/users/:id', [users_1.comparePassword, users_1.updateUser]);
+router.put('/api/users/', [users_1.comparePassword, users_1.updateUsername]);
+router.get('/api/users/:username/confirm-email/:token', users_1.confirmEmail);
 router.delete('/api/users/:id', [users_1.authenticateUser, users_1.deleteUser]);
 router.post('/api/users/register', users_1.registerUser);
 router.get('/api/users/verify/:token', users_1.verifyEmailToken);

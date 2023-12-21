@@ -44,5 +44,9 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         required: false,
     },
+    confirmToken: {
+        type: String,
+        required: false,
+    },
 }, { timestamps: true });
 exports.User = (0, mongoose_1.model)('User', userSchema);

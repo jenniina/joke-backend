@@ -9,6 +9,7 @@ export interface IUser extends Document {
   verified?: boolean
   token?: string
   resetToken?: string
+  confirmToken?: string
   createdAt?: string
   updatedAt?: string
 }
