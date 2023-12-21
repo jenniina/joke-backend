@@ -590,7 +590,7 @@ const confirmEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* (
           </h1>
           <p>${ELogInAtTheAppOrRequestANewEmailConfirmToken[language || 'en']}</p> 
           <p>
-          <a href=${process.env.BASE_URI}>${(_c = EBackToTheApp[language]) !== null && _c !== void 0 ? _c : 'Back to the app'}</a>
+          <a href=${process.env.SITE_URL}>${(_c = EBackToTheApp[language]) !== null && _c !== void 0 ? _c : 'Back to the app'}</a>
           </p>
         </div>
       </body>
@@ -646,7 +646,7 @@ const confirmEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             <h2>${EEmailConfirmed[language || 'en']}</h2>
             <p>${EEmailHasBeenConfirmed[language || 'en']}</p>
             <p>
-            <a href=${process.env.BASE_URI}>${EBackToTheApp[language || 'en']}</a>
+            <a href=${process.env.SITE_URL}>${EBackToTheApp[language || 'en']}</a>
             </p>
           </div>
         </body>
@@ -887,6 +887,7 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
     const language = req.body.language || 'en';
     const user = yield user_1.User.findOne({ username });
     if (!user) {
+        console.log('User not found');
         res.status(401).json({ success: false, message: EError[language] });
     }
     else if (user) {
@@ -901,6 +902,7 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
             yield user_1.User.findOneAndUpdate({ username }, { resetToken: token });
             sendMail(EPasswordReset[language], EResetPassword[language], username, language, link)
                 .then((result) => {
+                console.log('result ', result);
                 res.status(200).json({
                     success: true,
                     message: ETokenSent[language] || 'Token sent',
@@ -968,7 +970,7 @@ const sendMail = (subject, message, username, language, link) => {
         transporter.sendMail({
             from: process.env.NODEMAILER_USER,
             to: username,
-            subject: subject || 'Welcome',
+            subject: subject,
             text: message + ': ' + link || link,
         }, (error, info) => {
             if (error) {
@@ -1553,7 +1555,7 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
         <h1>${(_h = EVerificationSuccessful[language]) !== null && _h !== void 0 ? _h : 'Verification successful'}</h1>
         <p>${(_j = EAccountSuccessfullyVerified[language]) !== null && _j !== void 0 ? _j : 'Account successfully verified'}.</p>
         <p>
-        <a href=${process.env.BASE_URI}>${(_k = EBackToTheApp[language]) !== null && _k !== void 0 ? _k : 'Back to the app'}</a>
+        <a href=${process.env.SITE_URL}>${(_k = EBackToTheApp[language]) !== null && _k !== void 0 ? _k : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -1614,7 +1616,7 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
       <div>
         <h1>${EVerificationFailed[language]}</p>
         <p>
-        <a href=${process.env.BASE_URI}>${(_l = EBackToTheApp[language]) !== null && _l !== void 0 ? _l : 'Back to the app'}</a>
+        <a href=${process.env.SITE_URL}>${(_l = EBackToTheApp[language]) !== null && _l !== void 0 ? _l : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -1695,7 +1697,7 @@ exports.verifyEmailToken = verifyEmailToken;
 //         <h1>${EVerificationSuccessful[language as ELanguage]}</h1>
 //         <p>${EAccountSuccessfullyVerified}.</p>
 //         <p>
-//         <a href=${process.env.BASE_URI}>${EBackToTheApp[language as ELanguage]}</a>
+//         <a href=${process.env.SITE_URL}>${EBackToTheApp[language as ELanguage]}</a>
 //         </p>
 //       </div>
 //       </body>
@@ -1796,7 +1798,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         <p>${ELogInAtTheAppOrRequestANewPasswordResetToken[language] ||
                 'Check the app to request a new password reset token. '}</p> 
         <p>
-        <a href=${process.env.BASE_URI}>${(_m = EBackToTheApp[language]) !== null && _m !== void 0 ? _m : 'Back to the app'}</a>
+        <a href=${process.env.SITE_URL}>${(_m = EBackToTheApp[language]) !== null && _m !== void 0 ? _m : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -2086,7 +2088,7 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
       <div>
         <h1>${EPasswordResetSuccessfully[language] || 'Password reset successfully'}</h1>
         <p>
-        <a href=${process.env.BASE_URI}>${(_x = EBackToTheApp[language]) !== null && _x !== void 0 ? _x : 'Back to the app'}</a>
+        <a href=${process.env.SITE_URL}>${(_x = EBackToTheApp[language]) !== null && _x !== void 0 ? _x : 'Back to the app'}</a>
         </p>
       </div>
       </body>

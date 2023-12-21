@@ -561,7 +561,7 @@ const confirmEmail = async (req: Request, res: Response): Promise<void> => {
             ELogInAtTheAppOrRequestANewEmailConfirmToken[(language as ELanguage) || 'en']
           }</p> 
           <p>
-          <a href=${process.env.BASE_URI}>${
+          <a href=${process.env.SITE_URL}>${
         EBackToTheApp[language as ELanguage] ?? 'Back to the app'
       }</a>
           </p>
@@ -619,7 +619,7 @@ const confirmEmail = async (req: Request, res: Response): Promise<void> => {
             <h2>${EEmailConfirmed[(language as ELanguage) || 'en']}</h2>
             <p>${EEmailHasBeenConfirmed[(language as ELanguage) || 'en']}</p>
             <p>
-            <a href=${process.env.BASE_URI}>${
+            <a href=${process.env.SITE_URL}>${
         EBackToTheApp[(language as ELanguage) || 'en']
       }</a>
             </p>
@@ -859,6 +859,7 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
   const language = req.body.language || 'en'
   const user: IUser | null = await User.findOne({ username })
   if (!user) {
+    console.log('User not found')
     res.status(401).json({ success: false, message: EError[language as ELanguage] })
   } else if (user) {
     try {
@@ -878,6 +879,7 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
         link
       )
         .then((result) => {
+          console.log('result ', result)
           res.status(200).json({
             success: true,
             message: ETokenSent[language as unknown as ELanguage] || 'Token sent',
@@ -953,7 +955,7 @@ const sendMail = (
       {
         from: process.env.NODEMAILER_USER,
         to: username,
-        subject: subject || 'Welcome',
+        subject: subject,
         text: message + ': ' + link || link,
       },
       (error: Error, info: { response: unknown }) => {
@@ -1633,7 +1635,7 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
           'Account successfully verified'
         }.</p>
         <p>
-        <a href=${process.env.BASE_URI}>${
+        <a href=${process.env.SITE_URL}>${
         EBackToTheApp[language as ELanguage] ?? 'Back to the app'
       }</a>
         </p>
@@ -1696,7 +1698,7 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
       <div>
         <h1>${EVerificationFailed[language as ELanguage]}</p>
         <p>
-        <a href=${process.env.BASE_URI}>${
+        <a href=${process.env.SITE_URL}>${
         EBackToTheApp[language as ELanguage] ?? 'Back to the app'
       }</a>
         </p>
@@ -1782,7 +1784,7 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
 //         <h1>${EVerificationSuccessful[language as ELanguage]}</h1>
 //         <p>${EAccountSuccessfullyVerified}.</p>
 //         <p>
-//         <a href=${process.env.BASE_URI}>${EBackToTheApp[language as ELanguage]}</a>
+//         <a href=${process.env.SITE_URL}>${EBackToTheApp[language as ELanguage]}</a>
 //         </p>
 //       </div>
 //       </body>
@@ -1885,7 +1887,7 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
           'Check the app to request a new password reset token. '
         }</p> 
         <p>
-        <a href=${process.env.BASE_URI}>${
+        <a href=${process.env.SITE_URL}>${
         EBackToTheApp[language as ELanguage] ?? 'Back to the app'
       }</a>
         </p>
@@ -2193,7 +2195,7 @@ const resetPasswordToken = async (req: Request, res: Response): Promise<void> =>
           ] || 'Password reset successfully'
         }</h1>
         <p>
-        <a href=${process.env.BASE_URI}>${
+        <a href=${process.env.SITE_URL}>${
             EBackToTheApp[language as ELanguage] ?? 'Back to the app'
           }</a>
         </p>
