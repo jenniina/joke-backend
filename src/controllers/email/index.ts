@@ -136,7 +136,7 @@ export const sendVerificationLink = async (req: Request, res: Response) => {
     subject: `Verify your email address for jenniina.fi`,
     text: `
             Click the link below to verify your email address.
-            ${process.env.SITE_URL}/verify/${token}
+            ${process.env.BASE_URI}/verify/${token}
         `,
   }
 

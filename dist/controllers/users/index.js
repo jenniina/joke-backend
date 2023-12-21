@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.comparePassword = exports.refreshExpiredToken = exports.requestNewToken = exports.findUserByUsername = exports.verifyToken = exports.verifyTokenMiddleware = exports.generateToken = exports.changeUsernameToken = exports.changeUsername = exports.resetUsernameToken = exports.resetUsername = exports.forgotUsername = exports.verifyUsernameToken = exports.verifyUsername = exports.changeEmailToken = exports.changeEmail = exports.verifyEmailToken = exports.verifyEmail = exports.changePasswordToken = exports.changePassword = exports.resetPasswordToken = exports.resetPassword = exports.forgotPassword = exports.logoutUser = exports.registerUser = exports.loginUser = exports.deleteUser = exports.updateUser = exports.addUser = exports.getUser = exports.getUsers = exports.authenticateUser = exports.checkIfAdmin = void 0;
+exports.comparePassword = exports.refreshExpiredToken = exports.requestNewToken = exports.findUserByUsername = exports.verifyToken = exports.verifyTokenMiddleware = exports.generateToken = exports.changeUsernameToken = exports.changeUsername = exports.resetUsernameToken = exports.resetUsername = exports.forgotUsername = exports.verifyUsernameToken = exports.verifyUsername = exports.changeEmailToken = exports.changeEmail = exports.verifyEmailToken = exports.verifyEmail = exports.changePasswordToken = exports.changePassword = exports.resetPasswordToken = exports.resetPassword = exports.forgotPassword = exports.logoutUser = exports.registerUser = exports.loginUser = exports.deleteUser = exports.updateUser = exports.updateUsername = exports.confirmEmail = exports.addUser = exports.getUser = exports.getUsers = exports.authenticateUser = exports.checkIfAdmin = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_1 = require("../../models/user");
 const flatted = require('flatted');
@@ -61,6 +61,15 @@ var ETheComediansCompanion;
     ETheComediansCompanion["pt"] = "O Companheiro do Comediante";
     ETheComediansCompanion["cs"] = "Spole\u010Dn\u00EDk komika";
 })(ETheComediansCompanion || (ETheComediansCompanion = {}));
+var EJenniinaFi;
+(function (EJenniinaFi) {
+    EJenniinaFi["en"] = "Jenniina.fi React Site";
+    EJenniinaFi["es"] = "Sitio React Jenniina.fi";
+    EJenniinaFi["fr"] = "Site React Jenniina.fi";
+    EJenniinaFi["de"] = "Jenniina.fi React Site";
+    EJenniinaFi["pt"] = "Site React Jenniina.fi";
+    EJenniinaFi["cs"] = "Jenniina.fi React Site";
+})(EJenniinaFi || (EJenniinaFi = {}));
 var EBackToTheApp;
 (function (EBackToTheApp) {
     EBackToTheApp["en"] = "Back to the App";
@@ -436,8 +445,224 @@ const addUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.addUser = addUser;
+const updateUsername = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let EEmailConfirmation;
+    (function (EEmailConfirmation) {
+        EEmailConfirmation["en"] = "Email Confirmation, Jenniina.fi";
+        EEmailConfirmation["es"] = "Confirmaci\u00F3n de correo electr\u00F3nico, Jenniina.fi";
+        EEmailConfirmation["fr"] = "Confirmation de l email, Jenniina.fi";
+        EEmailConfirmation["de"] = "E-Mail-Best\u00E4tigung, Jenniina.fi";
+        EEmailConfirmation["pt"] = "Confirma\u00E7\u00E3o de email, Jenniina.fi";
+        EEmailConfirmation["cs"] = "Potvrzen\u00ED e-mailu, Jenniina.fi";
+    })(EEmailConfirmation || (EEmailConfirmation = {}));
+    let EConfirmEmail;
+    (function (EConfirmEmail) {
+        EConfirmEmail["en"] = "Please confirm your email address by clicking the link";
+        EConfirmEmail["es"] = "Por favor confirme su direcci\u00F3n de correo electr\u00F3nico haciendo clic en el enlace";
+        EConfirmEmail["fr"] = "Veuillez confirmer votre adresse email en cliquant sur le lien";
+        EConfirmEmail["de"] = "Bitte best\u00E4tigen Sie Ihre E-Mail-Adresse, indem Sie auf den Link klicken";
+        EConfirmEmail["pt"] = "Por favor, confirme seu endere\u00E7o de email clicando no link";
+        EConfirmEmail["cs"] = "Potvr\u010Fte svou e-mailovou adresu kliknut\u00EDm na odkaz";
+    })(EConfirmEmail || (EConfirmEmail = {}));
+    let EUpdatePending;
+    (function (EUpdatePending) {
+        EUpdatePending["en"] = "Username update pending, please check your email for a confirmation link.";
+        EUpdatePending["es"] = "Actualizaci\u00F3n de nombre de usuario pendiente, por favor revise su correo electr\u00F3nico para obtener un enlace de confirmaci\u00F3n.";
+        EUpdatePending["fr"] = "Mise \u00E0 jour du nom d utilisateur en attente, veuillez v\u00E9rifier votre email pour un lien de confirmation.";
+        EUpdatePending["de"] = "Benutzername Update ausstehend, bitte \u00FCberpr\u00FCfen Sie Ihre E-Mail f\u00FCr einen Best\u00E4tigungslink.";
+        EUpdatePending["pt"] = "Atualiza\u00E7\u00E3o do nome de usu\u00E1rio pendente, verifique seu email para um link de confirma\u00E7\u00E3o.";
+        EUpdatePending["cs"] = "Aktualizace u\u017Eivatelsk\u00E9ho jm\u00E9na \u010Dek\u00E1, zkontrolujte sv\u016Fj e-mail na potvrzovac\u00ED odkaz.";
+    })(EUpdatePending || (EUpdatePending = {}));
+    try {
+        const { body } = req;
+        const { _id, username } = body;
+        const user = yield user_1.User.findById(_id);
+        if (user) {
+            const token = generateToken(user._id);
+            user.set('confirmToken', token);
+            user.markModified('verified');
+            yield user.save();
+            // Prepare email details
+            const subject = EEmailConfirmation[user.language || 'en'];
+            const message = EConfirmEmail[user.language || 'en'];
+            const link = `${process.env.BASE_URI}/api/users/${username}/confirm-email/${token}?lang=${user.language}`;
+            const language = user.language || 'en';
+            // Send confirmation email to new address
+            yield sendMail(subject, message, username, language, link);
+            res.status(200).json({
+                success: true,
+                message: EUpdatePending[user.language || 'en'],
+            });
+        }
+        else {
+            res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+    }
+    catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'An error occurred while updating the username',
+        });
+    }
+});
+exports.updateUsername = updateUsername;
+const confirmEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
+    let EEmailConfirmed;
+    (function (EEmailConfirmed) {
+        EEmailConfirmed["en"] = "Email Confirmed";
+        EEmailConfirmed["es"] = "Correo electr\u00F3nico confirmado";
+        EEmailConfirmed["fr"] = "Email confirm\u00E9";
+        EEmailConfirmed["de"] = "E-Mail best\u00E4tigt";
+        EEmailConfirmed["pt"] = "Email confirmado";
+        EEmailConfirmed["cs"] = "E-mail potvrzeno";
+    })(EEmailConfirmed || (EEmailConfirmed = {}));
+    let EEmailHasBeenConfirmed;
+    (function (EEmailHasBeenConfirmed) {
+        EEmailHasBeenConfirmed["en"] = "Your email has been confirmed.";
+        EEmailHasBeenConfirmed["es"] = "Tu correo electr\u00F3nico ha sido confirmado.";
+        EEmailHasBeenConfirmed["fr"] = "Votre email a \u00E9t\u00E9 confirm\u00E9.";
+        EEmailHasBeenConfirmed["de"] = "Ihre E-Mail wurde best\u00E4tigt.";
+        EEmailHasBeenConfirmed["pt"] = "Seu email foi confirmado.";
+        EEmailHasBeenConfirmed["cs"] = "V\u00E1\u0161 e-mail byl potvrzen.";
+    })(EEmailHasBeenConfirmed || (EEmailHasBeenConfirmed = {}));
+    let ELogInAtTheAppOrRequestANewEmailConfirmToken;
+    (function (ELogInAtTheAppOrRequestANewEmailConfirmToken) {
+        ELogInAtTheAppOrRequestANewEmailConfirmToken["en"] = "If your email (username) has not been changed, please check the app to request a new email confirmation token.";
+        ELogInAtTheAppOrRequestANewEmailConfirmToken["es"] = "Si su correo electr\u00F3nico (nombre de usuario) no ha cambiado, verifique la aplicaci\u00F3n para solicitar un nuevo token de confirmaci\u00F3n de correo electr\u00F3nico.";
+        ELogInAtTheAppOrRequestANewEmailConfirmToken["fr"] = "Si votre email (nom d utilisateur) n a pas \u00E9t\u00E9 modifi\u00E9, veuillez v\u00E9rifier l application pour demander un nouveau jeton de confirmation d email.";
+        ELogInAtTheAppOrRequestANewEmailConfirmToken["de"] = "Wenn Ihre E-Mail (Benutzername) nicht ge\u00E4ndert wurde, \u00FCberpr\u00FCfen Sie bitte die App, um einen neuen E-Mail-Best\u00E4tigungstoken anzufordern.";
+        ELogInAtTheAppOrRequestANewEmailConfirmToken["pt"] = "Se seu email (nome de usu\u00E1rio) n\u00E3o foi alterado, verifique o aplicativo para solicitar um novo token de confirma\u00E7\u00E3o de email.";
+        ELogInAtTheAppOrRequestANewEmailConfirmToken["cs"] = "Pokud se e-mail (u\u017Eivatelsk\u00E9 jm\u00E9no) nezm\u011Bnil, zkontrolujte aplikaci, zda po\u017E\u00E1d\u00E1te o nov\u00FD token pro potvrzen\u00ED e-mailu.";
+    })(ELogInAtTheAppOrRequestANewEmailConfirmToken || (ELogInAtTheAppOrRequestANewEmailConfirmToken = {}));
+    const { token, username } = req.params;
+    const language = req.query.lang || 'en';
+    try {
+        // Validate the token
+        const user = yield user_1.User.findOneAndUpdate({ confirmToken: token }, { username });
+        if (!user) {
+            res.send(`
+      <!DOCTYPE html>
+      <html lang=${language}>
+      <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style> 
+      @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Oswald:wght@500;600&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
+        body {
+          font-family: Lato, Helvetica, Arial, sans-serif;
+          background-color: hsl(219, 100%, 10%);
+          color: white;
+          letter-spacing: -0.03em;
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          min-height: 100vh;
+        }
+        body > div {
+          margin: 0 auto;
+          max-width: 800px;  
+        }
+        h1 {
+          font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
+          text-align: center;
+        }
+        p {
+          font-size: 18px;
+          text-align: center;
+        }
+        a {
+          color: white;
+        }
+      </style>
+      <title>
+      ${EJenniinaFi[language || 'en']}</title>
+      </head>
+      <body>
+        <div>
+          <h1>
+            ${EInvalidOrMissingToken[language] || 'Invalid or expired token'}
+          </h1>
+          <p>${ELogInAtTheAppOrRequestANewEmailConfirmToken[language || 'en']}</p> 
+          <p>
+          <a href=${process.env.BASE_URI}>${(_c = EBackToTheApp[language]) !== null && _c !== void 0 ? _c : 'Back to the app'}</a>
+          </p>
+        </div>
+      </body>
+      </html>
+      `);
+        }
+        else if (user) {
+            user.verified = true;
+            user.confirmToken = undefined;
+            user.markModified('verified');
+            user.markModified('confirmToken');
+            yield user.save();
+            const htmlResponse = `
+      <html lang=${language !== null && language !== void 0 ? language : 'en'}>
+      <head> 
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style> 
+        @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Oswald:wght@500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
+          body {
+            font-family: Lato, Helvetica, Arial, sans-serif;
+            background-color: hsl(219, 100%, 10%);
+            color: white;
+            letter-spacing: -0.03em;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height: 100vh;
+          }
+          body > div {
+            margin: 0 auto;
+            max-width: 800px;  
+          }
+          h1, h2 {
+            font-family: Oswald, Lato, Helvetica, Arial, sans-serif;
+            text-align: center;
+          }
+          p {
+            font-size: 18px;
+            text-align: center;
+          }
+          a {
+            color: white;
+          }
+        </style>
+        <title>
+        ${EJenniinaFi[language || 'en']}</title>
+      </head>
+        <body>
+          <div>
+            <h1>${EJenniinaFi[language || 'en']}</h1>
+            <h2>${EEmailConfirmed[language || 'en']}</h2>
+            <p>${EEmailHasBeenConfirmed[language || 'en']}</p>
+            <p>
+            <a href=${process.env.BASE_URI}>${EBackToTheApp[language || 'en']}</a>
+            </p>
+          </div>
+        </body>
+      </html>
+      `;
+            res.send(htmlResponse);
+        }
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Internal Server Error *' });
+    }
+});
+exports.confirmEmail = confirmEmail;
 const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c, _d, _e;
+    var _d, _e, _f;
     try {
         const { 
         // params: { _id: _id },
@@ -449,7 +674,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             const hashedPassword = yield bcrypt_1.default.hash(password, salt);
             user.password = hashedPassword;
             user.markModified('password');
-            user.name = (_c = body.name) !== null && _c !== void 0 ? _c : user.name;
+            user.name = (_d = body.name) !== null && _d !== void 0 ? _d : user.name;
             user.markModified('name');
             user.set('language', body.language);
             const updatedUser = yield user.save();
@@ -460,9 +685,9 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             });
         }
         else if (user && !password) {
-            user.name = (_d = body.name) !== null && _d !== void 0 ? _d : user.name;
+            user.name = (_e = body.name) !== null && _e !== void 0 ? _e : user.name;
             user.markModified('name');
-            user.set('language', (_e = body.language) !== null && _e !== void 0 ? _e : 'en');
+            user.set('language', (_f = body.language) !== null && _f !== void 0 ? _f : 'en');
             const updatedUser = yield user.save();
             res.status(200).json({
                 success: true,
@@ -510,13 +735,6 @@ const comparePassword = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
     };
     try {
         const { _id, passwordOld, language } = req.body;
-        const { password } = req.body;
-        console.log('PASSWORD', password);
-        if (!password) {
-            next();
-            return;
-        }
-        console.log('req.body', req.body);
         const user = yield user_1.User.findById(_id);
         // if (!user) {
         //   res.status(404).json({ success: false, message: 'User not found ~' })
@@ -678,7 +896,7 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
             //const token = jwt.sign(userId, secret, { expiresIn: '1d' })
             //const token = '1234567890'
             const token = generateToken(user._id);
-            const link = `${process.env.SITE_URL}/api/users/reset/${token}?lang=${language}`;
+            const link = `${process.env.BASE_URI}/api/users/reset/${token}?lang=${language}`;
             //User.findOneAndUpdate({ username }, { $set: { resetToken: token } })
             yield user_1.User.findOneAndUpdate({ username }, { resetToken: token });
             sendMail(EPasswordReset[language], EResetPassword[language], username, language, link)
@@ -833,7 +1051,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     //       })
                     // } else {
                     const token = generateToken(newUser._id);
-                    const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${language}`;
+                    const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`;
                     newUser.token = token;
                     sendMail(EHelloWelcome[language], EEmailMessage[language], username, language, link)
                         .then((result) => {
@@ -942,7 +1160,7 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                     else {
                         token = generateToken(_id);
                         if (!(user === null || user === void 0 ? void 0 : user.verified)) {
-                            const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${body.language}`;
+                            const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`;
                             sendMail(EHelloWelcome[body.language], EEmailMessage[body.language], body.username, body.language, link)
                                 .then((r) => {
                                 reject({
@@ -1004,7 +1222,7 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                         //       })
                         //     } else {
                         user.token = token;
-                        const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${req.body.language}`;
+                        const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${req.body.language}`;
                         user
                             .save()
                             .then(() => {
@@ -1075,7 +1293,7 @@ exports.refreshExpiredToken = refreshExpiredToken;
 //           }
 //         } else {
 //           user.token = token
-//           const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${body.language}`
+//           const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`
 //           user
 //             .save()
 //             .then(() =>
@@ -1147,7 +1365,7 @@ const requestNewToken = (req, res) => __awaiter(void 0, void 0, void 0, function
             });
         }
     }
-    catch (_f) {
+    catch (_g) {
         res.status(500).json({
             success: false,
             message: `${EError[language]}. ${EErrorCreatingToken} *`,
@@ -1193,7 +1411,7 @@ exports.requestNewToken = requestNewToken;
 //       }
 //       const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
 //       const token = jwt.sign({ userId: newUser._id }, secret, { expiresIn: '1d' })
-//       const link = `${process.env.SITE_URL}/api/users/verify/${token}?lang=${language}`
+//       const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`
 //       newUser.token = token
 //       const sendMail = (): Promise<any> => {
 //         return new Promise((resolve, reject) => {
@@ -1258,7 +1476,7 @@ exports.requestNewToken = requestNewToken;
 //   }
 // }
 const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _g, _h, _j, _k, _l;
+    var _h, _j, _k, _l;
     try {
         const token = req.params.token;
         const user = yield user_1.User.findOne({ token: token });
@@ -1328,14 +1546,14 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
           }
         </style>
         <title>
-        ${(_g = ETheComediansCompanion[language]) !== null && _g !== void 0 ? _g : "The Comedian' Companion"}</title>
+        ${EJenniinaFi[language || 'en']}</title>
       </head>
       <body>
       <div>
         <h1>${(_h = EVerificationSuccessful[language]) !== null && _h !== void 0 ? _h : 'Verification successful'}</h1>
         <p>${(_j = EAccountSuccessfullyVerified[language]) !== null && _j !== void 0 ? _j : 'Account successfully verified'}.</p>
         <p>
-        <a href="https://react-az.jenniina.fi">${(_k = EBackToTheApp[language]) !== null && _k !== void 0 ? _k : 'Back to the app'}</a>
+        <a href=${process.env.BASE_URI}>${(_k = EBackToTheApp[language]) !== null && _k !== void 0 ? _k : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -1396,7 +1614,7 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
       <div>
         <h1>${EVerificationFailed[language]}</p>
         <p>
-        <a href="https://react-az.jenniina.fi">${(_l = EBackToTheApp[language]) !== null && _l !== void 0 ? _l : 'Back to the app'}</a>
+        <a href=${process.env.BASE_URI}>${(_l = EBackToTheApp[language]) !== null && _l !== void 0 ? _l : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -1470,14 +1688,14 @@ exports.verifyEmailToken = verifyEmailToken;
 //             font-size: 18px;
 //           }
 //         </style>
-//         <title>${ETheComediansCompanion[language as ELanguage]}</title>
+//         <title>${EJenniinaFi[language as ELanguage || 'en']}</title>
 //       </head>
 //       <body>
 //       <div>
 //         <h1>${EVerificationSuccessful[language as ELanguage]}</h1>
 //         <p>${EAccountSuccessfullyVerified}.</p>
 //         <p>
-//         <a href="https://react-az.jenniina.fi">${EBackToTheApp[language as ELanguage]}</a>
+//         <a href=${process.env.BASE_URI}>${EBackToTheApp[language as ELanguage]}</a>
 //         </p>
 //       </div>
 //       </body>
@@ -1524,7 +1742,7 @@ const logoutUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.logoutUser = logoutUser;
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _m, _o, _p, _q, _r, _s, _t, _u;
+    var _m, _o, _p, _q, _r;
     const { token } = req.params;
     const language = req.query.lang || 'en';
     try {
@@ -1568,7 +1786,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
           }
         </style>
         <title>
-        ${(_m = ETheComediansCompanion[language]) !== null && _m !== void 0 ? _m : "The Comedian' Companion"}</title>
+        ${EJenniinaFi[language || 'en']}</title>
       </head>
       <body>
       <div>
@@ -1578,7 +1796,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         <p>${ELogInAtTheAppOrRequestANewPasswordResetToken[language] ||
                 'Check the app to request a new password reset token. '}</p> 
         <p>
-        <a href="https://react-az.jenniina.fi">${(_o = EBackToTheApp[language]) !== null && _o !== void 0 ? _o : 'Back to the app'}</a>
+        <a href=${process.env.BASE_URI}>${(_m = EBackToTheApp[language]) !== null && _m !== void 0 ? _m : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -1659,23 +1877,23 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
           }
         </style>
         <title>
-        ${(_p = ETheComediansCompanion[language]) !== null && _p !== void 0 ? _p : "The Comedian' Companion"}</title>
+        ${EJenniinaFi[language || 'en']}</title>
       </head>
       <body>
       <div>
-        <h1>${(_q = ETheComediansCompanion[language]) !== null && _q !== void 0 ? _q : "The Comedian's Companion"}
+        <h1>${EJenniinaFi[language || 'en']}
         </h1>
-        <h2>${(_r = EPasswordReset[language]) !== null && _r !== void 0 ? _r : 'Password Reset'}</h2>
+        <h2>${(_o = EPasswordReset[language]) !== null && _o !== void 0 ? _o : 'Password Reset'}</h2>
         <form action="/api/users/reset/${token}?lang=${language}" method="post">
           <div>
-            <label for="newPassword">${(_s = ENewPassword[language]) !== null && _s !== void 0 ? _s : 'New password'}:</label>
+            <label for="newPassword">${(_p = ENewPassword[language]) !== null && _p !== void 0 ? _p : 'New password'}:</label>
             <input type="password" id="newPassword" name="newPassword" required>
           </div>
           <div>
-            <label for="confirmPassword">${(_t = EConfirmPassword[language]) !== null && _t !== void 0 ? _t : 'Confirm Password'}:</label>
+            <label for="confirmPassword">${(_q = EConfirmPassword[language]) !== null && _q !== void 0 ? _q : 'Confirm Password'}:</label>
             <input type="password" id="confirmPassword" name="confirmPassword" required>
           </div>
-          <button type="submit">${(_u = EResetPassword[language]) !== null && _u !== void 0 ? _u : 'Reset password'}</button>
+          <button type="submit">${(_r = EResetPassword[language]) !== null && _r !== void 0 ? _r : 'Reset password'}</button>
         </form> 
       </div>
       </body>
@@ -1691,7 +1909,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.resetPassword = resetPassword;
 const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _v, _w, _x, _y, _z, _0, _1, _2;
+    var _s, _t, _u, _v, _w, _x;
     const { token } = req.params;
     const { newPassword, confirmPassword } = req.body;
     const language = req.query.lang || 'en';
@@ -1794,18 +2012,18 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
           }
         </style>
         <title>
-        ${(_v = ETheComediansCompanion[language]) !== null && _v !== void 0 ? _v : "The Comedian' Companion"}</title>
+        ${EJenniinaFi[language || 'en']}</title>
       </head>
       <body>
       <div>
-        <h1>${(_w = EPasswordReset[language]) !== null && _w !== void 0 ? _w : 'Password Reset'}</h1>
+        <h1>${(_s = EPasswordReset[language]) !== null && _s !== void 0 ? _s : 'Password Reset'}</h1>
         <form action="/api/users/reset/${token}?lang=${language}" method="post">
-        <label for="newPassword">${(_x = ENewPassword[language]) !== null && _x !== void 0 ? _x : 'New password'}:</label>
+        <label for="newPassword">${(_t = ENewPassword[language]) !== null && _t !== void 0 ? _t : 'New password'}:</label>
         <input type="password" id="newPassword" name="newPassword" required>
-        <label for="confirmPassword">${(_y = EConfirmPassword[language]) !== null && _y !== void 0 ? _y : 'Confirm Password'}:</label>
+        <label for="confirmPassword">${(_u = EConfirmPassword[language]) !== null && _u !== void 0 ? _u : 'Confirm Password'}:</label>
         <input type="password" id="confirmPassword" name="confirmPassword" required>
-        <p>${(_z = EPasswordsDoNotMatch[language]) !== null && _z !== void 0 ? _z : 'Passwords do not match!'}</p>
-        <button type="submit">${(_0 = EResetPassword[language]) !== null && _0 !== void 0 ? _0 : 'Reset password'}</button>
+        <p>${(_v = EPasswordsDoNotMatch[language]) !== null && _v !== void 0 ? _v : 'Passwords do not match!'}</p>
+        <button type="submit">${(_w = EResetPassword[language]) !== null && _w !== void 0 ? _w : 'Reset password'}</button>
       </form> 
       </div>
       </body>
@@ -1862,13 +2080,13 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
           }
         </style>
         <title>
-        ${(_1 = ETheComediansCompanion[language]) !== null && _1 !== void 0 ? _1 : "The Comedian' Companion"}</title>
+        ${EJenniinaFi[language || 'en']}</title>
       </head>
       <body>
       <div>
         <h1>${EPasswordResetSuccessfully[language] || 'Password reset successfully'}</h1>
         <p>
-        <a href="https://react-az.jenniina.fi">${(_2 = EBackToTheApp[language]) !== null && _2 !== void 0 ? _2 : 'Back to the app'}</a>
+        <a href=${process.env.BASE_URI}>${(_x = EBackToTheApp[language]) !== null && _x !== void 0 ? _x : 'Back to the app'}</a>
         </p>
       </div>
       </body>

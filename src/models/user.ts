@@ -44,6 +44,10 @@ const userSchema: Schema = new Schema(
       type: String,
       required: false,
     },
+    confirmToken: {
+      type: String,
+      required: false,
+    },
   },
   { timestamps: true }
 )

@@ -50,6 +50,8 @@ import {
   requestNewToken,
   refreshExpiredToken,
   comparePassword,
+  updateUsername,
+  confirmEmail,
 } from '../controllers/users'
 import {
   getJokes,
@@ -76,6 +78,8 @@ router.get('/api/users', [authenticateUser, checkIfAdmin, getUsers])
 router.get('/api/users/:id', getUser)
 //router.post('/api/users', addUser)
 router.put('/api/users/:id', [comparePassword, updateUser])
+router.put('/api/users/', [comparePassword, updateUsername])
+router.get('/api/users/:username/confirm-email/:token', confirmEmail)
 router.delete('/api/users/:id', [authenticateUser, deleteUser])
 router.post('/api/users/register', registerUser)
 router.get('/api/users/verify/:token', verifyEmailToken)
