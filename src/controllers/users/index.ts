@@ -407,7 +407,14 @@ const addUser = async (req: Request, res: Response): Promise<void> => {
     res.status(201).json({
       success: true,
       message: EUserAdded[newUser.language || 'en'],
-      user: newUser,
+      user: {
+        _id: newUser._id,
+        name: newUser.name,
+        username: newUser.username,
+        password: newUser.password,
+        language: newUser.language,
+        verified: newUser.verified,
+      },
       users: allUsers,
     })
   } catch (error) {
@@ -658,19 +665,31 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
         message: `${
           EUserUpdated[(updatedUser?.language as unknown as ELanguage) || 'en']
         }!`,
-        user: updatedUser,
+        user: {
+          name: updatedUser.name,
+          username: updatedUser.username,
+          language: updatedUser.language,
+          role: updatedUser.role,
+          verified: updatedUser.verified,
+        },
       })
     } else if (user && !password) {
       user.name = body.name ?? user.name
       user.markModified('name')
       user.set('language', body.language ?? 'en')
-      const updatedUser = await user.save()
+      const updatedUser: IUser = await user.save()
       res.status(200).json({
         success: true,
         message: `${
           EUserUpdated[(updatedUser?.language as unknown as ELanguage) || 'en']
         }!`,
-        user: updatedUser,
+        user: {
+          name: updatedUser.name,
+          username: updatedUser.username,
+          language: updatedUser.language,
+          role: updatedUser.role,
+          verified: updatedUser.verified,
+        },
       })
     } else {
       res.status(404).json({
@@ -721,7 +740,6 @@ const comparePassword = async (
     //   return
     // }
     if (user) {
-      console.log('user', user, 'passwordOld', passwordOld)
       const passwordMatch: boolean = await comparePassword.call(user, passwordOld)
 
       if (passwordMatch) {
@@ -746,13 +764,10 @@ const comparePassword = async (
 
 const deleteUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const deletedUser: IUser | null = await User.findByIdAndRemove(req.params.id)
-    const allUsers: IUser[] = await User.find()
+    await User.findByIdAndRemove(req.params.id)
     res.status(200).json({
       success: true,
-      message: EUserDeleted[(deletedUser?.language as unknown as ELanguage) || 'en'],
-      user: deletedUser,
-      users: allUsers,
+      message: EUserDeleted[(req.body?.language as unknown as ELanguage) || 'en'],
     })
   } catch (error) {
     console.error('Error:', error)
@@ -792,7 +807,13 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
       res.status(200).json({
         success: true,
         message: ESuccessfullyLoggedIn[user.language || 'en'],
-        user,
+        user: {
+          name: user.name,
+          username: user.username,
+          language: user.language,
+          role: user.role,
+          verified: user.verified,
+        },
         token,
       })
     } else {
@@ -826,9 +847,18 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
         //generate new token
         const refresh = await refreshExpiredToken(req, user._id)
         if (refresh?.success) {
-          res
-            .status(401)
-            .json({ success: false, message: refresh.message, user, token: user.token })
+          res.status(401).json({
+            success: false,
+            message: refresh.message,
+            user: {
+              name: user.name,
+              username: user.username,
+              language: user.language,
+              role: user.role,
+              verified: user.verified,
+            },
+            token: user.token,
+          })
         } else {
           res.status(401).json({ success: false, message: refresh?.message })
         }
@@ -842,9 +872,18 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
       //generate new token
       const refresh = await refreshExpiredToken(req, user._id)
       if (refresh?.success) {
-        res
-          .status(401)
-          .json({ success: false, message: refresh.message, user, token: user.token })
+        res.status(401).json({
+          success: false,
+          message: refresh.message,
+          user: {
+            name: user.name,
+            username: user.username,
+            language: user.language,
+            role: user.role,
+            verified: user.verified,
+          },
+          token: user.token,
+        })
       } else {
         console.log(refresh?.message)
         res.status(401).json({ success: false, message: refresh?.message })
@@ -1057,7 +1096,13 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
                   newUser.save().then((user: IUser) => {
                     res.status(201).json({
                       success: true,
-                      user,
+                      user: {
+                        name: user.name,
+                        username: user.username,
+                        language: user.language,
+                        role: user.role,
+                        verified: user.verified,
+                      },
                       message: EMessage[language as ELanguage] || 'User registered',
                     })
                   })
@@ -1139,14 +1184,14 @@ type TRefreshExpiredToken = {
   success: boolean
   message: string
   newToken?: string
-  user?: IUser
+  user?: Pick<IUser, 'name' | 'username' | 'language' | 'role' | 'verified'>
 }
 
 const refreshExpiredToken = async (
   req: Request,
   _id: IUser['_id']
 ): Promise<TRefreshExpiredToken> => {
-  const body = req.body as Pick<IUser, 'username' | 'language'>
+  const body = req.body
 
   const getUserById_ = async (userId: string | undefined): Promise<IUser | undefined> => {
     const user = await User.findById(userId)
@@ -1202,7 +1247,13 @@ const refreshExpiredToken = async (
                             body.language as keyof typeof ENewTokenSentToEmail
                           ]
                         }` || 'Token sent',
-                      user,
+                      user: {
+                        name: user?.name,
+                        username: user?.username,
+                        language: user?.language,
+                        role: user?.role,
+                        verified: user?.verified,
+                      },
                     })
                   })
                   .catch((error) => {
@@ -1291,7 +1342,13 @@ const refreshExpiredToken = async (
                           body.language as keyof typeof ENewTokenSentToEmail
                         ]
                       }` || 'New link sent to email',
-                    user,
+                    user: {
+                      name: user.name,
+                      username: user.username,
+                      language: user.language,
+                      role: user.role,
+                      verified: user.verified,
+                    },
                   })
                 })
                 .catch((error) => {
@@ -1798,7 +1855,15 @@ const findUserByUsername = async (req: Request, res: Response): Promise<void> =>
     const userByUsername: IUser | null = await User.findOne({
       username: req.params.username,
     })
-    res.status(200).json({ user: userByUsername })
+    res.status(200).json({
+      user: {
+        name: userByUsername?.name,
+        username: userByUsername?.username,
+        language: userByUsername?.language,
+        role: userByUsername?.role,
+        verified: userByUsername?.verified,
+      },
+    })
   } catch (error) {
     console.error('Error:', error)
     res
