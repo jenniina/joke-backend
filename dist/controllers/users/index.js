@@ -689,6 +689,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 success: true,
                 message: `${EUserUpdated[(updatedUser === null || updatedUser === void 0 ? void 0 : updatedUser.language) || 'en']}!`,
                 user: {
+                    _id: updatedUser._id,
                     name: updatedUser.name,
                     username: updatedUser.username,
                     language: updatedUser.language,
@@ -706,6 +707,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 success: true,
                 message: `${EUserUpdated[(updatedUser === null || updatedUser === void 0 ? void 0 : updatedUser.language) || 'en']}!`,
                 user: {
+                    _id: updatedUser._id,
                     name: updatedUser.name,
                     username: updatedUser.username,
                     language: updatedUser.language,
@@ -828,6 +830,7 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 success: true,
                 message: ESuccessfullyLoggedIn[user.language || 'en'],
                 user: {
+                    _id: user._id,
                     name: user.name,
                     username: user.username,
                     language: user.language,
@@ -876,6 +879,7 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         success: false,
                         message: refresh.message,
                         user: {
+                            _id: user._id,
                             name: user.name,
                             username: user.username,
                             language: user.language,
@@ -904,6 +908,7 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     success: false,
                     message: refresh.message,
                     user: {
+                        _id: user._id,
                         name: user.name,
                         username: user.username,
                         language: user.language,
@@ -1101,6 +1106,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                             res.status(201).json({
                                 success: true,
                                 user: {
+                                    _id: user._id,
                                     name: user.name,
                                     username: user.username,
                                     language: user.language,
@@ -1216,6 +1222,7 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                                     message: `${EEmailMessage[body.language]} *,
                         ${ENewTokenSentToEmail[body.language]}` || 'Token sent',
                                     user: {
+                                        _id: user === null || user === void 0 ? void 0 : user._id,
                                         name: user === null || user === void 0 ? void 0 : user.name,
                                         username: user === null || user === void 0 ? void 0 : user.username,
                                         language: user === null || user === void 0 ? void 0 : user.language,
@@ -1287,6 +1294,7 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                                 success: true,
                                 message: ` ${EUserNotVerified[req.body.language]}. ${ENewTokenSentToEmail[body.language]}` || 'New link sent to email',
                                 user: {
+                                    _id: user._id,
                                     name: user.name,
                                     username: user.username,
                                     language: user.language,
@@ -1770,6 +1778,7 @@ const findUserByUsername = (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
         res.status(200).json({
             user: {
+                _id: userByUsername === null || userByUsername === void 0 ? void 0 : userByUsername._id,
                 name: userByUsername === null || userByUsername === void 0 ? void 0 : userByUsername.name,
                 username: userByUsername === null || userByUsername === void 0 ? void 0 : userByUsername.username,
                 language: userByUsername === null || userByUsername === void 0 ? void 0 : userByUsername.language,

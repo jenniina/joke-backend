@@ -666,6 +666,7 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
           EUserUpdated[(updatedUser?.language as unknown as ELanguage) || 'en']
         }!`,
         user: {
+          _id: updatedUser._id,
           name: updatedUser.name,
           username: updatedUser.username,
           language: updatedUser.language,
@@ -684,6 +685,7 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
           EUserUpdated[(updatedUser?.language as unknown as ELanguage) || 'en']
         }!`,
         user: {
+          _id: updatedUser._id,
           name: updatedUser.name,
           username: updatedUser.username,
           language: updatedUser.language,
@@ -808,6 +810,7 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
         success: true,
         message: ESuccessfullyLoggedIn[user.language || 'en'],
         user: {
+          _id: user._id,
           name: user.name,
           username: user.username,
           language: user.language,
@@ -851,6 +854,7 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
             success: false,
             message: refresh.message,
             user: {
+              _id: user._id,
               name: user.name,
               username: user.username,
               language: user.language,
@@ -876,6 +880,7 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
           success: false,
           message: refresh.message,
           user: {
+            _id: user._id,
             name: user.name,
             username: user.username,
             language: user.language,
@@ -1097,6 +1102,7 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
                     res.status(201).json({
                       success: true,
                       user: {
+                        _id: user._id,
                         name: user.name,
                         username: user.username,
                         language: user.language,
@@ -1184,7 +1190,7 @@ type TRefreshExpiredToken = {
   success: boolean
   message: string
   newToken?: string
-  user?: Pick<IUser, 'name' | 'username' | 'language' | 'role' | 'verified'>
+  user?: Pick<IUser, '_id' | 'name' | 'username' | 'language' | 'role' | 'verified'>
 }
 
 const refreshExpiredToken = async (
@@ -1248,6 +1254,7 @@ const refreshExpiredToken = async (
                           ]
                         }` || 'Token sent',
                       user: {
+                        _id: user?._id,
                         name: user?.name,
                         username: user?.username,
                         language: user?.language,
@@ -1343,6 +1350,7 @@ const refreshExpiredToken = async (
                         ]
                       }` || 'New link sent to email',
                     user: {
+                      _id: user._id,
                       name: user.name,
                       username: user.username,
                       language: user.language,
@@ -1857,6 +1865,7 @@ const findUserByUsername = async (req: Request, res: Response): Promise<void> =>
     })
     res.status(200).json({
       user: {
+        _id: userByUsername?._id,
         name: userByUsername?.name,
         username: userByUsername?.username,
         language: userByUsername?.language,
