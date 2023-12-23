@@ -568,7 +568,7 @@ const confirmEmail = async (req: Request, res: Response): Promise<void> => {
             ELogInAtTheAppOrRequestANewEmailConfirmToken[(language as ELanguage) || 'en']
           }</p> 
           <p>
-          <a href=${process.env.SITE_URL}>${
+          <a href=${process.env.SITE_URL}/?login=login>${
         EBackToTheApp[language as ELanguage] ?? 'Back to the app'
       }</a>
           </p>
@@ -626,7 +626,7 @@ const confirmEmail = async (req: Request, res: Response): Promise<void> => {
             <h2>${EEmailConfirmed[(language as ELanguage) || 'en']}</h2>
             <p>${EEmailHasBeenConfirmed[(language as ELanguage) || 'en']}</p>
             <p>
-            <a href=${process.env.SITE_URL}>${
+            <a href=${process.env.SITE_URL}/?login=login>${
         EBackToTheApp[(language as ELanguage) || 'en']
       }</a>
             </p>
@@ -1700,7 +1700,7 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
           'Account successfully verified'
         }.</p>
         <p>
-        <a href=${process.env.SITE_URL}>${
+        <a href=${process.env.SITE_URL}/?login=login>${
         EBackToTheApp[language as ELanguage] ?? 'Back to the app'
       }</a>
         </p>
@@ -2269,7 +2269,7 @@ const resetPasswordToken = async (req: Request, res: Response): Promise<void> =>
           ] || 'Password reset successfully'
         }</h1>
         <p>
-        <a href=${process.env.SITE_URL}>${
+        <a href=${process.env.SITE_URL}/?login=login>${
             EBackToTheApp[language as ELanguage] ?? 'Back to the app'
           }</a>
         </p>

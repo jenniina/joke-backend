@@ -597,7 +597,7 @@ const confirmEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* (
           </h1>
           <p>${ELogInAtTheAppOrRequestANewEmailConfirmToken[language || 'en']}</p> 
           <p>
-          <a href=${process.env.SITE_URL}>${(_c = EBackToTheApp[language]) !== null && _c !== void 0 ? _c : 'Back to the app'}</a>
+          <a href=${process.env.SITE_URL}/?login=login>${(_c = EBackToTheApp[language]) !== null && _c !== void 0 ? _c : 'Back to the app'}</a>
           </p>
         </div>
       </body>
@@ -653,7 +653,7 @@ const confirmEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             <h2>${EEmailConfirmed[language || 'en']}</h2>
             <p>${EEmailHasBeenConfirmed[language || 'en']}</p>
             <p>
-            <a href=${process.env.SITE_URL}>${EBackToTheApp[language || 'en']}</a>
+            <a href=${process.env.SITE_URL}/?login=login>${EBackToTheApp[language || 'en']}</a>
             </p>
           </div>
         </body>
@@ -1621,7 +1621,7 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
         <h1>${(_j = EVerificationSuccessful[language]) !== null && _j !== void 0 ? _j : 'Verification successful'}</h1>
         <p>${(_k = EAccountSuccessfullyVerified[language]) !== null && _k !== void 0 ? _k : 'Account successfully verified'}.</p>
         <p>
-        <a href=${process.env.SITE_URL}>${(_l = EBackToTheApp[language]) !== null && _l !== void 0 ? _l : 'Back to the app'}</a>
+        <a href=${process.env.SITE_URL}/?login=login>${(_l = EBackToTheApp[language]) !== null && _l !== void 0 ? _l : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -2163,7 +2163,7 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
       <div>
         <h1>${EPasswordResetSuccessfully[language] || 'Password reset successfully'}</h1>
         <p>
-        <a href=${process.env.SITE_URL}>${(_y = EBackToTheApp[language]) !== null && _y !== void 0 ? _y : 'Back to the app'}</a>
+        <a href=${process.env.SITE_URL}/?login=login>${(_y = EBackToTheApp[language]) !== null && _y !== void 0 ? _y : 'Back to the app'}</a>
         </p>
       </div>
       </body>
