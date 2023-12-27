@@ -4,7 +4,7 @@ exports.Joke = void 0;
 const mongoose_1 = require("mongoose");
 const jokeSchema = new mongoose_1.Schema({
     jokeId: {
-        type: Number,
+        type: Number || String,
         required: true,
         unique: false,
     },
