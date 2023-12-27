@@ -3,7 +3,7 @@ import { model, Schema } from 'mongoose'
 const jokeSchema: Schema = new Schema(
   {
     jokeId: {
-      type: Number,
+      type: Number || String,
       required: true,
       unique: false,
     },
