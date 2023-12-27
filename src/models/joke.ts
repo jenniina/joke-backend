@@ -3,7 +3,7 @@ import { model, Schema } from 'mongoose'
 const jokeSchema: Schema = new Schema(
   {
     jokeId: {
-      type: Number || String,
+      type: String,
       required: true,
       unique: false,
     },
@@ -15,7 +15,7 @@ const jokeSchema: Schema = new Schema(
     category: {
       type: String,
       required: true,
-      enum: ['Any', 'Misc', 'Programming', 'Dark', 'Pun', 'Spooky', 'Christmas'],
+      // enum: ['Any', 'Misc', 'Programming', 'Dark', 'Pun', 'Spooky', 'Christmas'],
     },
     language: {
       type: String,

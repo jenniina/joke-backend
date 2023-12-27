@@ -4,7 +4,7 @@ exports.Joke = void 0;
 const mongoose_1 = require("mongoose");
 const jokeSchema = new mongoose_1.Schema({
     jokeId: {
-        type: Number || String,
+        type: String,
         required: true,
         unique: false,
     },
@@ -16,7 +16,7 @@ const jokeSchema = new mongoose_1.Schema({
     category: {
         type: String,
         required: true,
-        enum: ['Any', 'Misc', 'Programming', 'Dark', 'Pun', 'Spooky', 'Christmas'],
+        // enum: ['Any', 'Misc', 'Programming', 'Dark', 'Pun', 'Spooky', 'Christmas'],
     },
     language: {
         type: String,
