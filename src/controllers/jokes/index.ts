@@ -61,58 +61,125 @@ const addJoke = async (req: Request, res: Response): Promise<void> => {
       'jokeId' | 'type' | 'category' | 'user' | 'language'
     >
 
-    // // Validate input fields
-    // if (!body.jokeId || !body.category || !body.user || !body.language) {
-    //   res.status(400).json({ message: 'Missing required fields' })
-    //   return
+    // let joke: IJoke
+
+    // // Check if a joke already exists
+    // const existingJoke = await (body &&
+    //   Joke.findOne({
+    //     jokeId: body.jokeId,
+    //     type: body.type,
+    //     category: body.category,
+    //     language: body.language,
+    //   }))
+
+    // if (existingJoke) {
+    //   // Check if the user ID already exists in the user array
+    //   if (!existingJoke.user.includes(req.body.user)) {
+    //     existingJoke.user.push(req.body.user[0])
+    //     await existingJoke.save()
+    //   }
+    //   joke = mapToJoke(existingJoke)
+    // } else {
+    //   if (req.body.type === EJokeType.single) {
+    //     const savedJoke = await new Joke({
+    //       jokeId: body.jokeId,
+    //       joke: req.body.joke,
+    //       category: body.category,
+    //       type: body.type,
+    //       safe: req.body.safe,
+    //       user: body.user,
+    //       language: body.language,
+    //     }).save()
+
+    //     joke = mapToJoke(savedJoke)
+    //   } else {
+    //     const savedJoke = await new Joke({
+    //       jokeId: body.jokeId,
+    //       setup: req.body.setup,
+    //       delivery: req.body.delivery,
+    //       category: body.category,
+    //       type: body.type,
+    //       safe: req.body.safe,
+    //       user: body.user,
+    //       language: body.language,
+    //     }).save()
+
+    //     joke = mapToJoke(savedJoke)
+    //   }
     // }
 
-    let joke: IJoke
-
-    // Check if a joke already exists
-    const existingJoke = await (body &&
-      Joke.findOne({
-        jokeId: body.jokeId,
-        type: body.type,
-        category: body.category,
-        language: body.language,
-      }))
-
-    if (existingJoke) {
-      // Check if the user ID already exists in the user array
-      if (!existingJoke.user.includes(req.body.user)) {
-        existingJoke.user.push(req.body.user[0])
-        await existingJoke.save()
-      }
-      joke = mapToJoke(existingJoke)
-    } else {
-      if (req.body.type === EJokeType.single) {
-        const savedJoke = await new Joke({
-          jokeId: body.jokeId,
-          joke: req.body.joke,
-          category: body.category,
-          type: body.type,
-          safe: req.body.safe,
-          user: body.user,
-          language: body.language,
-        }).save()
-
-        joke = mapToJoke(savedJoke)
-      } else {
-        const savedJoke = await new Joke({
-          jokeId: body.jokeId,
-          setup: req.body.setup,
-          delivery: req.body.delivery,
-          category: body.category,
-          type: body.type,
-          safe: req.body.safe,
-          user: body.user,
-          language: body.language,
-        }).save()
-
-        joke = mapToJoke(savedJoke)
-      }
+    const filter = {
+      jokeId: body.jokeId.toString(),
+      type: body.type,
+      category: body.category,
+      language: body.language,
     }
+
+    const update =
+      req.body.type === EJokeType.single
+        ? {
+            $setOnInsert: {
+              jokeId: body.jokeId.toString(),
+              joke: req.body.joke,
+              category: body.category,
+              type: body.type,
+              safe: req.body.safe,
+              language: body.language,
+            },
+            $addToSet: { user: { $each: body.user } },
+          }
+        : {
+            $setOnInsert: {
+              jokeId: body.jokeId.toString(),
+              setup: req.body.setup,
+              delivery: req.body.delivery,
+              category: body.category,
+              type: body.type,
+              safe: req.body.safe,
+              language: body.language,
+            },
+            $addToSet: { user: { $each: body.user } },
+          }
+
+    const joke = await Joke.findOneAndUpdate(filter, update, {
+      new: true,
+      upsert: true,
+    })
+
+    // const existingJoke = await Joke.findOne(filter)
+
+    // let joke
+
+    // if (existingJoke) {
+    //   // If the joke exists, update the user array
+    //   existingJoke.user = [...new Set([...existingJoke.user, ...body.user])]
+    //   joke = await existingJoke.save()
+    // } else {
+    //   // If the joke doesn't exist, create a new joke
+    //   const jokeData =
+    //     req.body.type === EJokeType.single
+    //       ? {
+    //           jokeId: body.jokeId,
+    //           joke: req.body.joke,
+    //           category: body.category,
+    //           type: body.type,
+    //           safe: req.body.safe,
+    //           user: body.user,
+    //           language: body.language,
+    //         }
+    //       : {
+    //           jokeId: body.jokeId,
+    //           setup: req.body.setup,
+    //           delivery: req.body.delivery,
+    //           category: body.category,
+    //           type: body.type,
+    //           safe: req.body.safe,
+    //           user: body.user,
+    //           language: body.language,
+    //         }
+
+    //   joke = await new Joke(jokeData).save()
+    // }
 
     res.status(201).json({ success: true, message: 'Joke added', joke })
   } catch (error) {

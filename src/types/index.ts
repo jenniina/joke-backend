@@ -37,7 +37,7 @@ export enum ELanguages {
 }
 
 export interface IJokeCommonFields {
-  jokeId: number
+  jokeId: string
   type: EJokeType
   category: ECategory
   language: ELanguages
@@ -58,29 +58,6 @@ export interface IJokeTwoPart extends IJokeCommonFields {
   delivery: string
 }
 
-// export interface IJokeSingle extends Document {
-//   jokeId: number
-//   joke: string
-//   type: EJokeType
-//   category: ECategory
-//   language: ELanguages
-//   safe: boolean
-//   user: IUser['_id'][]
-//   createdAt?: string
-//   updatedAt?: string
-// }
-// export interface IJokeTwoPart extends Document {
-//   jokeId: number
-//   setup: string
-//   delivery: string
-//   type: IJokeType
-//   category: ECategory
-//   language: ELanguages
-//   safe: boolean
-//   user: IUser['_id'][]
-//   createdAt?: string
-//   updatedAt?: string
-// }
 export type IJoke = IJokeSingle | IJokeTwoPart
 
 export interface ITokenPayload {
