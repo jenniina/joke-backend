@@ -2,19 +2,16 @@ import { Response, Request, NextFunction } from 'express'
 import bcrypt from 'bcrypt'
 import { IUser } from '../../types'
 import { User } from '../../models/user'
+import { Quiz } from '../../models/quiz'
+import { Todo } from '../../models/todo'
+import { Joke } from '../../models/joke'
 import { ITokenPayload, IToken } from '../../types'
 import jwt, { JwtPayload, Secret } from 'jsonwebtoken'
 const flatted = require('flatted')
 import { createHash, randomBytes, createCipheriv } from 'crypto'
 const crypto = require('crypto')
 
-const key = crypto.randomBytes(32)
-
-// const key = createHash('sha256')
-//   .update(String(process.env.BRANCA_KEY))
-//   .digest('base64')
-//   .substr(0, 32)
-const branca = require('branca')(key)
+const JWT_SECRET = process.env.JWT_SECRET
 
 const dotenv = require('dotenv')
 dotenv.config()
@@ -258,48 +255,74 @@ enum ESuccessfullyLoggedIn {
   cs = 'Úspěšně přihlášen',
 }
 
-const generateToken = (id: string | undefined): string | undefined => {
+const generateToken = async (id: string | undefined): Promise<string | undefined> => {
   if (!id) return undefined
-  // const id = JSON.stringify({
-  //   userId: userId,
-  // })
-  const json = flatted.stringify({
-    userId: id,
-  })
-  return branca.encode(json)
-  // const payload: ITokenPayload = { userId: userId }
-  // const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
-  // const options = { expiresIn: '1d' }
-  // return jwt.sign(payload, secret, options, (err, token) => {
-  //   if (err) {
-  //     console.error(err)
-  //     return undefined
-  //   } else {
-  //     return token
-  //   }
-  // }) as IToken['token']
+
+  const secret: Secret = process.env.JWT_SECRET || 'sfj0ker8GJ3RT3s5djdf23'
+  const options = { expiresIn: '1d' }
+  try {
+    const token = (await new Promise<string | undefined>((resolve, reject) => {
+      jwt.sign({ userId: id }, secret, options, (err, token) => {
+        if (err) {
+          console.error(err)
+          reject(undefined)
+        } else {
+          console.log('tokennnn', token)
+          resolve(token)
+        }
+      })
+    })) as IToken['token']
+    return token
+  } catch (error) {
+    console.error('Error generating token:', error)
+    return undefined
+  }
 }
 
-// const verifyToken = (token: string): ITokenPayload => {
-//   const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
-//   return jwt.verify(token, secret) as ITokenPayload
+const verifyToken = (token: string) => {
+  const secret: Secret = process.env.JWT_SECRET || 'sfj0ker8GJ3RT3s5djdf23'
+  console.log('TOKEN VERIFY', jwt.verify(token, secret))
+  return jwt.verify(token, secret) as ITokenPayload
+}
+
+const authenticateUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1]
+    if (!token)
+      throw new Error(ENoTokenProvided[(req.body.language as ELanguage) || 'en'])
+    console.log('TOKEN', token)
+    const decoded = verifyToken(token)
+    console.log('Decoded:', decoded)
+    if (!decoded) throw new Error('Token not decoded')
+    const user: IUser | null = await User.findById(decoded?.userId)
+    const language = user?.language || 'en'
+
+    if (!user) throw new Error(EAuthenticationFailed[language as ELanguage])
+
+    // Attach user information to the request object
+    req.body.user = user
+    next()
+  } catch (error) {
+    //throw new Error((error as Error).message)
+    console.error('Error:', error)
+    res.status(401).json({ success: false, message: 'Authentication failed' })
+  }
+}
+// const secret: Secret = process.env.JWT_SECRET || 'sfj0ker8GJ3RT3s5djdf23'
+// try {
+//   if (token) return jwt.verify(token, secret) as JwtPayload
+//   else return undefined
+// } catch (error) {
+//   if ((error as Error).name === 'TokenExpiredError') {
+//     throw new Error('Token expired')
+//   } else {
+//     throw error // Re-throw other errors
+//   }
 // }
-
-const verifyToken = (token: string | undefined) => {
-  const json = branca.decode(token)
-  return JSON.parse(json)
-  // const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
-  // try {
-  //   if (token) return jwt.verify(token, secret) as JwtPayload
-  //   else return undefined
-  // } catch (error) {
-  //   if ((error as Error).name === 'TokenExpiredError') {
-  //     throw new Error('Token expired')
-  //   } else {
-  //     throw error // Re-throw other errors
-  //   }
-  // }
-}
 
 const verifyTokenMiddleware = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -335,33 +358,6 @@ const checkIfAdmin = (req: Request, res: Response, next: NextFunction) => {
         EAccessDeniedAdminPrivilegeRequired[language as ELanguage] ||
         'Access denied. Admin privilege required.',
     })
-  }
-}
-
-const authenticateUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1]
-    if (!token)
-      throw new Error(ENoTokenProvided[(req.body.language as ELanguage) || 'en'])
-
-    const decoded = verifyToken(token)
-    if (!decoded) throw new Error('Token not decoded')
-    const user: IUser | null = await User.findById(decoded?.userId)
-    const language = user?.language || 'en'
-
-    if (!user) throw new Error(EAuthenticationFailed[language as ELanguage])
-
-    // Attach user information to the request object
-    req.body = user
-    next()
-  } catch (error) {
-    //throw new Error((error as Error).message)
-    console.error('Error:', error)
-    res.status(401).json({ success: false, message: 'Authentication failed' })
   }
 }
 
@@ -455,7 +451,7 @@ const updateUsername = async (req: Request, res: Response): Promise<void> => {
     const { _id, username } = body
     const user = await User.findById(_id)
     if (user) {
-      const token = generateToken(user._id)
+      const token = await generateToken(user._id)
       user.set('confirmToken', token)
       user.markModified('verified')
       await user.save()
@@ -764,21 +760,6 @@ const comparePassword = async (
   }
 }
 
-const deleteUser = async (req: Request, res: Response): Promise<void> => {
-  try {
-    await User.findByIdAndRemove(req.params.id)
-    res.status(200).json({
-      success: true,
-      message: EUserDeleted[(req.body?.language as unknown as ELanguage) || 'en'],
-    })
-  } catch (error) {
-    console.error('Error:', error)
-    res
-      .status(500)
-      .json({ success: false, message: EError[(req.body.language as ELanguage) || 'en'] })
-  }
-}
-
 const loginUser = async (req: Request, res: Response): Promise<void> => {
   const comparePassword = async function (
     this: IUser,
@@ -805,7 +786,8 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
   } else if (user?.verified) {
     const passwordMatch: boolean = await comparePassword.call(user, password)
     if (passwordMatch) {
-      const token = generateToken(user._id)
+      const token = await generateToken(user._id)
+      console.log('token', token)
       res.status(200).json({
         success: true,
         message: ESuccessfullyLoggedIn[user.language || 'en'],
@@ -911,7 +893,7 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
       // const userId = { userId: user._id }
       //const token = jwt.sign(userId, secret, { expiresIn: '1d' })
       //const token = '1234567890'
-      const token = generateToken(user._id)
+      const token = await generateToken(user._id)
       const link = `${process.env.BASE_URI}/api/users/reset/${token}?lang=${language}`
       //User.findOneAndUpdate({ username }, { $set: { resetToken: token } })
       await User.findOneAndUpdate({ username }, { resetToken: token })
@@ -1054,7 +1036,7 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
       .hash(password, saltRounds)
       .then((hashedPassword) => {
         return User.findOne({ username })
-          .then((user) => {
+          .then(async (user) => {
             if (user) {
               res.status(401).json({
                 message:
@@ -1086,7 +1068,7 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
               //           EErrorCreatingToken[newUser?.language] || 'Error creating token',
               //       })
               // } else {
-              const token = generateToken(newUser._id)
+              const token = await generateToken(newUser._id)
               const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`
               newUser.token = token
 
@@ -1229,11 +1211,11 @@ const refreshExpiredToken = async (
         | undefined
       if (!token) {
         getUserById_(_id)
-          .then((user) => {
+          .then(async (user) => {
             if (user?.token) {
               token = user.token
             } else {
-              token = generateToken(_id)
+              token = await generateToken(_id)
               if (!user?.verified) {
                 const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`
                 sendMail(
@@ -1482,7 +1464,7 @@ const requestNewToken = async (req: Request, res: Response): Promise<void> => {
         .json({ success: false, message: `${EError[language as ELanguage]} -` })
       return
     }
-    const token = generateToken(user._id)
+    const token = await generateToken(user._id)
     if (token) {
       res.json({
         success: true,
@@ -2396,6 +2378,30 @@ const changeUsernameToken = async (req: Request, res: Response): Promise<void> =
   }
 }
 
+const deleteUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params
+
+    await Todo.deleteMany({ user: id })
+
+    await Quiz.deleteMany({ user: id })
+
+    await Joke.updateMany({ users: id }, { $pull: { users: id } })
+
+    await User.deleteOne({ _id: id })
+
+    res.status(200).json({
+      success: true,
+      message: EUserDeleted[(req.body?.language as unknown as ELanguage) || 'en'],
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({
+      success: false,
+      message: EError[(req.body?.language as ELanguage) || 'en'],
+    })
+  }
+}
 export {
   // verificationSuccess,
   checkIfAdmin,

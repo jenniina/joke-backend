@@ -15,14 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.comparePassword = exports.refreshExpiredToken = exports.requestNewToken = exports.findUserByUsername = exports.verifyToken = exports.verifyTokenMiddleware = exports.generateToken = exports.changeUsernameToken = exports.changeUsername = exports.resetUsernameToken = exports.resetUsername = exports.forgotUsername = exports.verifyUsernameToken = exports.verifyUsername = exports.changeEmailToken = exports.changeEmail = exports.verifyEmailToken = exports.verifyEmail = exports.changePasswordToken = exports.changePassword = exports.resetPasswordToken = exports.resetPassword = exports.forgotPassword = exports.logoutUser = exports.registerUser = exports.loginUser = exports.deleteUser = exports.updateUser = exports.updateUsername = exports.confirmEmail = exports.addUser = exports.getUser = exports.getUsers = exports.authenticateUser = exports.checkIfAdmin = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_1 = require("../../models/user");
+const quiz_1 = require("../../models/quiz");
+const todo_1 = require("../../models/todo");
+const joke_1 = require("../../models/joke");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const flatted = require('flatted');
 const crypto = require('crypto');
-const key = crypto.randomBytes(32);
-// const key = createHash('sha256')
-//   .update(String(process.env.BRANCA_KEY))
-//   .digest('base64')
-//   .substr(0, 32)
-const branca = require('branca')(key);
+const JWT_SECRET = process.env.JWT_SECRET;
 const dotenv = require('dotenv');
 dotenv.config();
 const nodemailer = require('nodemailer');
@@ -286,53 +285,79 @@ var ESuccessfullyLoggedIn;
     ESuccessfullyLoggedIn["pt"] = "Logado com sucesso";
     ESuccessfullyLoggedIn["cs"] = "\u00DAsp\u011B\u0161n\u011B p\u0159ihl\u00E1\u0161en";
 })(ESuccessfullyLoggedIn || (ESuccessfullyLoggedIn = {}));
-const generateToken = (id) => {
+const generateToken = (id) => __awaiter(void 0, void 0, void 0, function* () {
     if (!id)
         return undefined;
-    // const id = JSON.stringify({
-    //   userId: userId,
-    // })
-    const json = flatted.stringify({
-        userId: id,
-    });
-    return branca.encode(json);
-    // const payload: ITokenPayload = { userId: userId }
-    // const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
-    // const options = { expiresIn: '1d' }
-    // return jwt.sign(payload, secret, options, (err, token) => {
-    //   if (err) {
-    //     console.error(err)
-    //     return undefined
-    //   } else {
-    //     return token
-    //   }
-    // }) as IToken['token']
-};
+    const secret = process.env.JWT_SECRET || 'sfj0ker8GJ3RT3s5djdf23';
+    const options = { expiresIn: '1d' };
+    try {
+        const token = (yield new Promise((resolve, reject) => {
+            jsonwebtoken_1.default.sign({ userId: id }, secret, options, (err, token) => {
+                if (err) {
+                    console.error(err);
+                    reject(undefined);
+                }
+                else {
+                    console.log('tokennnn', token);
+                    resolve(token);
+                }
+            });
+        }));
+        return token;
+    }
+    catch (error) {
+        console.error('Error generating token:', error);
+        return undefined;
+    }
+});
 exports.generateToken = generateToken;
-// const verifyToken = (token: string): ITokenPayload => {
-//   const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
-//   return jwt.verify(token, secret) as ITokenPayload
-// }
 const verifyToken = (token) => {
-    const json = branca.decode(token);
-    return JSON.parse(json);
-    // const secret: Secret = process.env.JWT_SECRET || 'jgtrshdjfshdf'
-    // try {
-    //   if (token) return jwt.verify(token, secret) as JwtPayload
-    //   else return undefined
-    // } catch (error) {
-    //   if ((error as Error).name === 'TokenExpiredError') {
-    //     throw new Error('Token expired')
-    //   } else {
-    //     throw error // Re-throw other errors
-    //   }
-    // }
+    const secret = process.env.JWT_SECRET || 'sfj0ker8GJ3RT3s5djdf23';
+    console.log('TOKEN VERIFY', jsonwebtoken_1.default.verify(token, secret));
+    return jsonwebtoken_1.default.verify(token, secret);
 };
 exports.verifyToken = verifyToken;
-const verifyTokenMiddleware = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const authenticateUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(' ')[1];
+        if (!token)
+            throw new Error(ENoTokenProvided[req.body.language || 'en']);
+        console.log('TOKEN', token);
+        const decoded = verifyToken(token);
+        console.log('Decoded:', decoded);
+        if (!decoded)
+            throw new Error('Token not decoded');
+        const user = yield user_1.User.findById(decoded === null || decoded === void 0 ? void 0 : decoded.userId);
+        const language = (user === null || user === void 0 ? void 0 : user.language) || 'en';
+        if (!user)
+            throw new Error(EAuthenticationFailed[language]);
+        // Attach user information to the request object
+        req.body.user = user;
+        next();
+    }
+    catch (error) {
+        //throw new Error((error as Error).message)
+        console.error('Error:', error);
+        res.status(401).json({ success: false, message: 'Authentication failed' });
+    }
+});
+exports.authenticateUser = authenticateUser;
+// const secret: Secret = process.env.JWT_SECRET || 'sfj0ker8GJ3RT3s5djdf23'
+// try {
+//   if (token) return jwt.verify(token, secret) as JwtPayload
+//   else return undefined
+// } catch (error) {
+//   if ((error as Error).name === 'TokenExpiredError') {
+//     throw new Error('Token expired')
+//   } else {
+//     throw error // Re-throw other errors
+//   }
+// }
+const verifyTokenMiddleware = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b;
+    try {
+        const token = (_b = req.headers.authorization) === null || _b === void 0 ? void 0 : _b.split(' ')[1];
         if (!token)
             throw new Error(ENoTokenProvided[req.body.language || 'en']);
         const decoded = verifyToken(token);
@@ -368,30 +393,6 @@ const checkIfAdmin = (req, res, next) => {
     }
 };
 exports.checkIfAdmin = checkIfAdmin;
-const authenticateUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
-    try {
-        const token = (_b = req.headers.authorization) === null || _b === void 0 ? void 0 : _b.split(' ')[1];
-        if (!token)
-            throw new Error(ENoTokenProvided[req.body.language || 'en']);
-        const decoded = verifyToken(token);
-        if (!decoded)
-            throw new Error('Token not decoded');
-        const user = yield user_1.User.findById(decoded === null || decoded === void 0 ? void 0 : decoded.userId);
-        const language = (user === null || user === void 0 ? void 0 : user.language) || 'en';
-        if (!user)
-            throw new Error(EAuthenticationFailed[language]);
-        // Attach user information to the request object
-        req.body = user;
-        next();
-    }
-    catch (error) {
-        //throw new Error((error as Error).message)
-        console.error('Error:', error);
-        res.status(401).json({ success: false, message: 'Authentication failed' });
-    }
-});
-exports.authenticateUser = authenticateUser;
 const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield user_1.User.find();
@@ -485,7 +486,7 @@ const updateUsername = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const { _id, username } = body;
         const user = yield user_1.User.findById(_id);
         if (user) {
-            const token = generateToken(user._id);
+            const token = yield generateToken(user._id);
             user.set('confirmToken', token);
             user.markModified('verified');
             yield user.save();
@@ -784,23 +785,6 @@ const comparePassword = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.comparePassword = comparePassword;
-const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _g;
-    try {
-        yield user_1.User.findByIdAndRemove(req.params.id);
-        res.status(200).json({
-            success: true,
-            message: EUserDeleted[((_g = req.body) === null || _g === void 0 ? void 0 : _g.language) || 'en'],
-        });
-    }
-    catch (error) {
-        console.error('Error:', error);
-        res
-            .status(500)
-            .json({ success: false, message: EError[req.body.language || 'en'] });
-    }
-});
-exports.deleteUser = deleteUser;
 const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const comparePassword = function (candidatePassword) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -825,7 +809,8 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     else if (user === null || user === void 0 ? void 0 : user.verified) {
         const passwordMatch = yield comparePassword.call(user, password);
         if (passwordMatch) {
-            const token = generateToken(user._id);
+            const token = yield generateToken(user._id);
+            console.log('token', token);
             res.status(200).json({
                 success: true,
                 message: ESuccessfullyLoggedIn[user.language || 'en'],
@@ -941,7 +926,7 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
             // const userId = { userId: user._id }
             //const token = jwt.sign(userId, secret, { expiresIn: '1d' })
             //const token = '1234567890'
-            const token = generateToken(user._id);
+            const token = yield generateToken(user._id);
             const link = `${process.env.BASE_URI}/api/users/reset/${token}?lang=${language}`;
             //User.findOneAndUpdate({ username }, { $set: { resetToken: token } })
             yield user_1.User.findOneAndUpdate({ username }, { resetToken: token });
@@ -1068,7 +1053,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             .hash(password, saltRounds)
             .then((hashedPassword) => {
             return user_1.User.findOne({ username })
-                .then((user) => {
+                .then((user) => __awaiter(void 0, void 0, void 0, function* () {
                 if (user) {
                     res.status(401).json({
                         message: `${ERegistrationFailed[user.language]}. ${EPleaseCheckYourEmailIfYouHaveAlreadyRegistered[user.language]}` ||
@@ -1097,7 +1082,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     //           EErrorCreatingToken[newUser?.language] || 'Error creating token',
                     //       })
                     // } else {
-                    const token = generateToken(newUser._id);
+                    const token = yield generateToken(newUser._id);
                     const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`;
                     newUser.token = token;
                     sendMail(EHelloWelcome[language], EEmailMessage[language], username, language, link)
@@ -1127,7 +1112,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 }
                 // )
                 // }
-            })
+            }))
                 .catch((error) => {
                 console.error(error);
                 res.status(500).json({
@@ -1207,12 +1192,12 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
             let token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(' ')[1];
             if (!token) {
                 getUserById_(_id)
-                    .then((user) => {
+                    .then((user) => __awaiter(void 0, void 0, void 0, function* () {
                     if (user === null || user === void 0 ? void 0 : user.token) {
                         token = user.token;
                     }
                     else {
-                        token = generateToken(_id);
+                        token = yield generateToken(_id);
                         if (!(user === null || user === void 0 ? void 0 : user.verified)) {
                             const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`;
                             sendMail(EHelloWelcome[body.language], EEmailMessage[body.language], body.username, body.language, link)
@@ -1243,7 +1228,7 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                         // reject(new Error('No token provided'))
                         // return
                     }
-                })
+                }))
                     .catch((error) => {
                     console.error(error);
                     reject({
@@ -1418,7 +1403,7 @@ const requestNewToken = (req, res) => __awaiter(void 0, void 0, void 0, function
                 .json({ success: false, message: `${EError[language]} -` });
             return;
         }
-        const token = generateToken(user._id);
+        const token = yield generateToken(user._id);
         if (token) {
             res.json({
                 success: true,
@@ -1433,7 +1418,7 @@ const requestNewToken = (req, res) => __awaiter(void 0, void 0, void 0, function
             });
         }
     }
-    catch (_h) {
+    catch (_g) {
         res.status(500).json({
             success: false,
             message: `${EError[language]}. ${EErrorCreatingToken} *`,
@@ -1544,7 +1529,7 @@ exports.requestNewToken = requestNewToken;
 //   }
 // }
 const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _j, _k, _l, _m;
+    var _h, _j, _k, _l;
     try {
         const token = req.params.token;
         const user = yield user_1.User.findOne({ token: token });
@@ -1618,10 +1603,10 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
       </head>
       <body>
       <div>
-        <h1>${(_j = EVerificationSuccessful[language]) !== null && _j !== void 0 ? _j : 'Verification successful'}</h1>
-        <p>${(_k = EAccountSuccessfullyVerified[language]) !== null && _k !== void 0 ? _k : 'Account successfully verified'}.</p>
+        <h1>${(_h = EVerificationSuccessful[language]) !== null && _h !== void 0 ? _h : 'Verification successful'}</h1>
+        <p>${(_j = EAccountSuccessfullyVerified[language]) !== null && _j !== void 0 ? _j : 'Account successfully verified'}.</p>
         <p>
-        <a href=${process.env.SITE_URL}/?login=login>${(_l = EBackToTheApp[language]) !== null && _l !== void 0 ? _l : 'Back to the app'}</a>
+        <a href=${process.env.SITE_URL}/?login=login>${(_k = EBackToTheApp[language]) !== null && _k !== void 0 ? _k : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -1682,7 +1667,7 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
       <div>
         <h1>${EVerificationFailed[language]}</p>
         <p>
-        <a href=${process.env.SITE_URL}>${(_m = EBackToTheApp[language]) !== null && _m !== void 0 ? _m : 'Back to the app'}</a>
+        <a href=${process.env.SITE_URL}>${(_l = EBackToTheApp[language]) !== null && _l !== void 0 ? _l : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -1819,7 +1804,7 @@ const logoutUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.logoutUser = logoutUser;
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _o, _p, _q, _r, _s;
+    var _m, _o, _p, _q, _r;
     const { token } = req.params;
     const language = req.query.lang || 'en';
     try {
@@ -1873,7 +1858,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         <p>${ELogInAtTheAppOrRequestANewPasswordResetToken[language] ||
                 'Check the app to request a new password reset token. '}</p> 
         <p>
-        <a href=${process.env.SITE_URL}>${(_o = EBackToTheApp[language]) !== null && _o !== void 0 ? _o : 'Back to the app'}</a>
+        <a href=${process.env.SITE_URL}>${(_m = EBackToTheApp[language]) !== null && _m !== void 0 ? _m : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -1960,17 +1945,17 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
       <div>
         <h1>${EJenniinaFi[language || 'en']}
         </h1>
-        <h2>${(_p = EPasswordReset[language]) !== null && _p !== void 0 ? _p : 'Password Reset'}</h2>
+        <h2>${(_o = EPasswordReset[language]) !== null && _o !== void 0 ? _o : 'Password Reset'}</h2>
         <form action="/api/users/reset/${token}?lang=${language}" method="post">
           <div>
-            <label for="newPassword">${(_q = ENewPassword[language]) !== null && _q !== void 0 ? _q : 'New password'}:</label>
+            <label for="newPassword">${(_p = ENewPassword[language]) !== null && _p !== void 0 ? _p : 'New password'}:</label>
             <input type="password" id="newPassword" name="newPassword" required>
           </div>
           <div>
-            <label for="confirmPassword">${(_r = EConfirmPassword[language]) !== null && _r !== void 0 ? _r : 'Confirm Password'}:</label>
+            <label for="confirmPassword">${(_q = EConfirmPassword[language]) !== null && _q !== void 0 ? _q : 'Confirm Password'}:</label>
             <input type="password" id="confirmPassword" name="confirmPassword" required>
           </div>
-          <button type="submit">${(_s = EResetPassword[language]) !== null && _s !== void 0 ? _s : 'Reset password'}</button>
+          <button type="submit">${(_r = EResetPassword[language]) !== null && _r !== void 0 ? _r : 'Reset password'}</button>
         </form> 
       </div>
       </body>
@@ -1986,7 +1971,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.resetPassword = resetPassword;
 const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _t, _u, _v, _w, _x, _y;
+    var _s, _t, _u, _v, _w, _x;
     const { token } = req.params;
     const { newPassword, confirmPassword } = req.body;
     const language = req.query.lang || 'en';
@@ -2093,14 +2078,14 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
       </head>
       <body>
       <div>
-        <h1>${(_t = EPasswordReset[language]) !== null && _t !== void 0 ? _t : 'Password Reset'}</h1>
+        <h1>${(_s = EPasswordReset[language]) !== null && _s !== void 0 ? _s : 'Password Reset'}</h1>
         <form action="/api/users/reset/${token}?lang=${language}" method="post">
-        <label for="newPassword">${(_u = ENewPassword[language]) !== null && _u !== void 0 ? _u : 'New password'}:</label>
+        <label for="newPassword">${(_t = ENewPassword[language]) !== null && _t !== void 0 ? _t : 'New password'}:</label>
         <input type="password" id="newPassword" name="newPassword" required>
-        <label for="confirmPassword">${(_v = EConfirmPassword[language]) !== null && _v !== void 0 ? _v : 'Confirm Password'}:</label>
+        <label for="confirmPassword">${(_u = EConfirmPassword[language]) !== null && _u !== void 0 ? _u : 'Confirm Password'}:</label>
         <input type="password" id="confirmPassword" name="confirmPassword" required>
-        <p>${(_w = EPasswordsDoNotMatch[language]) !== null && _w !== void 0 ? _w : 'Passwords do not match!'}</p>
-        <button type="submit">${(_x = EResetPassword[language]) !== null && _x !== void 0 ? _x : 'Reset password'}</button>
+        <p>${(_v = EPasswordsDoNotMatch[language]) !== null && _v !== void 0 ? _v : 'Passwords do not match!'}</p>
+        <button type="submit">${(_w = EResetPassword[language]) !== null && _w !== void 0 ? _w : 'Reset password'}</button>
       </form> 
       </div>
       </body>
@@ -2163,7 +2148,7 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
       <div>
         <h1>${EPasswordResetSuccessfully[language] || 'Password reset successfully'}</h1>
         <p>
-        <a href=${process.env.SITE_URL}/?login=login>${(_y = EBackToTheApp[language]) !== null && _y !== void 0 ? _y : 'Back to the app'}</a>
+        <a href=${process.env.SITE_URL}/?login=login>${(_x = EBackToTheApp[language]) !== null && _x !== void 0 ? _x : 'Back to the app'}</a>
         </p>
       </div>
       </body>
@@ -2302,3 +2287,25 @@ const changeUsernameToken = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.changeUsernameToken = changeUsernameToken;
+const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _y, _z;
+    try {
+        const { id } = req.params;
+        yield todo_1.Todo.deleteMany({ user: id });
+        yield quiz_1.Quiz.deleteMany({ user: id });
+        yield joke_1.Joke.updateMany({ users: id }, { $pull: { users: id } });
+        yield user_1.User.deleteOne({ _id: id });
+        res.status(200).json({
+            success: true,
+            message: EUserDeleted[((_y = req.body) === null || _y === void 0 ? void 0 : _y.language) || 'en'],
+        });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: EError[((_z = req.body) === null || _z === void 0 ? void 0 : _z.language) || 'en'],
+        });
+    }
+});
+exports.deleteUser = deleteUser;
