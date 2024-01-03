@@ -7,25 +7,11 @@ import { Todo } from '../../models/todo'
 import { Joke } from '../../models/joke'
 import { ITokenPayload, IToken } from '../../types'
 import jwt, { JwtPayload, Secret } from 'jsonwebtoken'
-const flatted = require('flatted')
-import { createHash, randomBytes, createCipheriv } from 'crypto'
-const crypto = require('crypto')
-
-const JWT_SECRET = process.env.JWT_SECRET
+import { sendMail } from '../email'
+import { ELanguage } from '../../types'
 
 const dotenv = require('dotenv')
 dotenv.config()
-
-const nodemailer = require('nodemailer')
-
-const transporter = nodemailer.createTransport({
-  host: process.env.NODEMAILER_HOST,
-  port: process.env.NODEMAILER_PORT,
-  auth: {
-    user: process.env.NODEMAILER_USER,
-    pass: process.env.NODEMAILER_PASSWORD,
-  },
-})
 
 enum EError {
   en = 'An error occurred',
@@ -34,30 +20,26 @@ enum EError {
   de = 'Ein Fehler ist aufgetreten',
   pt = 'Ocorreu um erro',
   cs = 'Došlo k chybě',
+  fi = 'Virhe tapahtui',
 }
-enum ELanguage {
-  en = 'en',
-  es = 'es',
-  fr = 'fr',
-  de = 'de',
-  pt = 'pt',
-  cs = 'cs',
-}
-enum ETheComediansCompanion {
-  en = "The Comedian's Companion",
-  es = 'El Compañero del Comediante',
-  fr = 'Le Compagnon du Comédien',
-  de = 'Der Begleiter des Komikers',
-  pt = 'O Companheiro do Comediante',
-  cs = 'Společník komika',
-}
+// enum ELanguage {
+//   en = 'en',
+//   es = 'es',
+//   fr = 'fr',
+//   de = 'de',
+//   pt = 'pt',
+//   cs = 'cs',
+//   fi = 'fi',
+// }
+
 enum EJenniinaFi {
-  en = 'Jenniina.fi React Site',
-  es = 'Sitio React Jenniina.fi',
-  fr = 'Site React Jenniina.fi',
-  de = 'Jenniina.fi React Site',
-  pt = 'Site React Jenniina.fi',
-  cs = 'Jenniina.fi React Site',
+  en = 'Jenniina.fi React',
+  es = 'React Jenniina.fi',
+  fr = 'React Jenniina.fi',
+  de = 'Jenniina.fi React',
+  pt = 'React Jenniina.fi',
+  cs = 'Jenniina.fi React',
+  fi = 'Jenniina.fi React',
 }
 enum EBackToTheApp {
   en = 'Back to the App',
@@ -66,6 +48,7 @@ enum EBackToTheApp {
   de = 'Zurück zur App',
   pt = 'Voltar para o aplicativo',
   cs = 'Zpět do aplikace',
+  fi = 'Takaisin sovellukseen',
 }
 enum EErrorCreatingToken {
   en = 'Error creating token',
@@ -74,6 +57,7 @@ enum EErrorCreatingToken {
   de = 'Fehler beim Erstellen des Tokens',
   pt = 'Erro ao criar token',
   cs = 'Chyba při vytváření tokenu',
+  fi = 'Virhe luotaessa tokenia',
 }
 enum EHelloWelcome {
   en = 'Hello, welcome to the Jenniina.fi site.',
@@ -82,6 +66,7 @@ enum EHelloWelcome {
   de = 'Hallo, willkommen auf der Website Jenniina.fi.',
   pt = 'Olá, bem-vindo ao site Jenniina.fi.',
   cs = 'Ahoj, vítejte na webu Jenniina.fi.',
+  fi = 'Hei, tervetuloa Jenniina.fi-sivustolle.',
 }
 enum EEmailMessage {
   en = 'Please verify your email',
@@ -90,6 +75,7 @@ enum EEmailMessage {
   de = 'Bitte überprüfen Sie Ihre E-Mail',
   pt = 'Por favor, verifique seu email',
   cs = 'Prosím, ověřte svůj email',
+  fi = 'Vahvista sähköpostisi',
 }
 enum EErrorSendingMail {
   en = 'Error sending mail',
@@ -98,6 +84,7 @@ enum EErrorSendingMail {
   de = 'Fehler beim Senden der E-Mail',
   pt = 'Erro ao enviar email',
   cs = 'Chyba při odesílání emailu',
+  fi = 'Virhe sähköpostin lähetyksessä',
 }
 enum ETokenSent {
   en = 'Token sent',
@@ -106,6 +93,7 @@ enum ETokenSent {
   de = 'Token gesendet',
   pt = 'Token enviado',
   cs = 'Token odeslán',
+  fi = 'Token lähetetty',
 }
 enum ENoTokenProvided {
   en = 'No token provided',
@@ -114,6 +102,7 @@ enum ENoTokenProvided {
   de = 'Kein Token angegeben',
   pt = 'Nenhum token fornecido',
   cs = 'Nebyl poskytnut žádný token',
+  fi = 'Ei toimitettu tokenia',
 }
 
 enum ETokenVerified {
@@ -123,6 +112,7 @@ enum ETokenVerified {
   de = 'Token verifiziert',
   pt = 'Token verificado',
   cs = 'Token ověřen',
+  fi = 'Token tarkistettu',
 }
 
 enum EPasswordReset {
@@ -132,6 +122,7 @@ enum EPasswordReset {
   de = 'Passwort zurücksetzen',
   pt = 'Redefinição de senha',
   cs = 'Obnovení hesla',
+  fi = 'Salasanan palautus',
 }
 enum EResetPassword {
   en = 'Reset password',
@@ -140,6 +131,7 @@ enum EResetPassword {
   de = 'Passwort zurücksetzen',
   pt = 'Redefinir senha',
   cs = 'Obnovit heslo',
+  fi = 'Nollaa salasana',
 }
 enum ENewPassword {
   en = 'New Password',
@@ -148,6 +140,7 @@ enum ENewPassword {
   de = 'Neues Kennwort',
   pt = 'Nova senha',
   cs = 'Nové heslo',
+  fi = 'Uusi salasana',
 }
 enum EConfirmPassword {
   en = 'Confirm Password',
@@ -156,6 +149,7 @@ enum EConfirmPassword {
   de = 'Kennwort bestätigen',
   pt = 'Confirme a Senha',
   cs = 'Potvrďte heslo',
+  fi = 'Vahvista salasana',
 }
 enum EInvalidLoginCredentials {
   en = 'Invalid login credentials',
@@ -164,6 +158,7 @@ enum EInvalidLoginCredentials {
   de = 'Ungültige Anmeldeinformationen',
   pt = 'Credenciais de login inválidas',
   cs = 'Neplatné přihlašovací údaje',
+  fi = 'Virheelliset kirjautumistiedot',
 }
 enum EInvalidOrMissingToken {
   en = 'Invalid or missing request',
@@ -172,6 +167,7 @@ enum EInvalidOrMissingToken {
   de = 'Ungültige oder fehlende Anfrage',
   pt = 'Solicitação inválida ou ausente',
   cs = 'Neplatný nebo chybějící požadavek',
+  fi = 'Virheellinen tai puuttuva pyyntö',
 }
 enum EPleaseCheckYourEmailIfYouHaveAlreadyRegistered {
   en = 'Please check your email if you have already registered',
@@ -180,6 +176,7 @@ enum EPleaseCheckYourEmailIfYouHaveAlreadyRegistered {
   de = 'Bitte überprüfen Sie Ihre E-Mail, wenn Sie sich bereits registriert haben',
   pt = 'Por favor, verifique seu email se você já se registrou',
   cs = 'Zkontrolujte svůj email, pokud jste se již zaregistrovali',
+  fi = 'Tarkista sähköpostisi, jos olet jo rekisteröitynyt',
 }
 enum ELogInAtTheAppOrRequestANewPasswordResetToken {
   en = 'Log in at the app or request a new password reset token',
@@ -188,6 +185,7 @@ enum ELogInAtTheAppOrRequestANewPasswordResetToken {
   de = 'Melden Sie sich in der App an oder fordern Sie einen neuen Token zum Zurücksetzen des Passworts an',
   pt = 'Faça login no aplicativo ou solicite um novo token de redefinição de senha',
   cs = 'Přihlaste se do aplikace nebo požádejte o nový token pro obnovení hesla',
+  fi = 'Kirjaudu sovellukseen tai pyydä uusi salasanan palautustoken',
 }
 enum EAccessDeniedAdminPrivilegeRequired {
   en = 'Access denied. Admin privilege required.',
@@ -196,6 +194,7 @@ enum EAccessDeniedAdminPrivilegeRequired {
   de = 'Zugriff verweigert. Admin-Berechtigung erforderlich.',
   pt = 'Acesso negado. Privilégio de administrador necessário.',
   cs = 'Přístup odepřen. Vyžaduje se oprávnění správce.',
+  fi = 'Pääsy evätty. Vaaditaan ylläpitäjän oikeudet.',
 }
 enum EAuthenticationFailed {
   en = 'Authentication failed',
@@ -204,6 +203,7 @@ enum EAuthenticationFailed {
   de = 'Authentifizierung fehlgeschlagen',
   pt = 'Autenticação falhou',
   cs = 'Autentizace selhala',
+  fi = 'Todennus epäonnistui',
 }
 enum EUserAdded {
   en = 'User added',
@@ -212,6 +212,7 @@ enum EUserAdded {
   de = 'Benutzer hinzugefügt',
   pt = 'Usuário adicionado',
   cs = 'Uživatel přidán',
+  fi = 'Käyttäjä lisätty',
 }
 enum EUserUpdated {
   en = 'User updated',
@@ -220,6 +221,7 @@ enum EUserUpdated {
   de = 'Benutzer aktualisiert',
   pt = 'Usuário atualizado',
   cs = 'Uživatel aktualizován',
+  fi = 'Käyttäjä päivitetty',
 }
 enum EUserDeleted {
   en = 'User deleted',
@@ -228,6 +230,7 @@ enum EUserDeleted {
   de = 'Benutzer gelöscht',
   pt = 'Usuário excluído',
   cs = 'Uživatel smazán',
+  fi = 'Käyttäjä poistettu',
 }
 enum EYouHaveLoggedOut {
   en = 'You have logged out',
@@ -236,6 +239,7 @@ enum EYouHaveLoggedOut {
   de = 'Sie haben sich abgemeldet',
   pt = 'Você saiu',
   cs = 'Odhlásili jste se',
+  fi = 'Olet kirjautunut ulos',
 }
 
 enum EUsernameRequired {
@@ -245,6 +249,7 @@ enum EUsernameRequired {
   de = 'Benutzername erforderlich',
   pt = 'Nome de usuário obrigatório',
   cs = 'Vyžadováno uživatelské jméno',
+  fi = 'Käyttäjätunnus vaaditaan',
 }
 enum ESuccessfullyLoggedIn {
   en = 'Successfully logged in',
@@ -253,6 +258,7 @@ enum ESuccessfullyLoggedIn {
   de = 'Erfolgreich angemeldet',
   pt = 'Logado com sucesso',
   cs = 'Úspěšně přihlášen',
+  fi = 'Kirjauduttu onnistuneesti',
 }
 
 const generateToken = async (id: string | undefined): Promise<string | undefined> => {
@@ -364,7 +370,7 @@ const checkIfAdmin = (req: Request, res: Response, next: NextFunction) => {
 const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const users: IUser[] = await User.find()
-    res.status(200).json({ users })
+    res.status(200).json(users)
   } catch (error) {
     console.error('Error:', error)
     res
@@ -429,6 +435,7 @@ const updateUsername = async (req: Request, res: Response): Promise<void> => {
     de = 'E-Mail-Bestätigung, Jenniina.fi',
     pt = 'Confirmação de email, Jenniina.fi',
     cs = 'Potvrzení e-mailu, Jenniina.fi',
+    fi = 'Sähköpostin vahvistus, Jenniina.fi',
   }
   enum EConfirmEmail {
     en = 'Please confirm your email address by clicking the link',
@@ -437,6 +444,7 @@ const updateUsername = async (req: Request, res: Response): Promise<void> => {
     de = 'Bitte bestätigen Sie Ihre E-Mail-Adresse, indem Sie auf den Link klicken',
     pt = 'Por favor, confirme seu endereço de email clicando no link',
     cs = 'Potvrďte svou e-mailovou adresu kliknutím na odkaz',
+    fi = 'Vahvista sähköpostiosoitteesi napsauttamalla linkkiä',
   }
   enum EUpdatePending {
     en = 'Username update pending, please check your email for a confirmation link.',
@@ -445,6 +453,7 @@ const updateUsername = async (req: Request, res: Response): Promise<void> => {
     de = 'Benutzername Update ausstehend, bitte überprüfen Sie Ihre E-Mail für einen Bestätigungslink.',
     pt = 'Atualização do nome de usuário pendente, verifique seu email para um link de confirmação.',
     cs = 'Aktualizace uživatelského jména čeká, zkontrolujte svůj e-mail na potvrzovací odkaz.',
+    fi = 'Käyttäjätunnuksen päivitys odottaa, tarkista sähköpostisi vahvistuslinkkiä varten.',
   }
   try {
     const { body } = req
@@ -491,6 +500,7 @@ const confirmEmail = async (req: Request, res: Response): Promise<void> => {
     de = 'E-Mail bestätigt',
     pt = 'Email confirmado',
     cs = 'E-mail potvrzeno',
+    fi = 'Sähköposti vahvistettu',
   }
   enum EEmailHasBeenConfirmed {
     en = 'Your email has been confirmed.',
@@ -499,6 +509,7 @@ const confirmEmail = async (req: Request, res: Response): Promise<void> => {
     de = 'Ihre E-Mail wurde bestätigt.',
     pt = 'Seu email foi confirmado.',
     cs = 'Váš e-mail byl potvrzen.',
+    fi = 'Sähköposti on vahvistettu.',
   }
   enum ELogInAtTheAppOrRequestANewEmailConfirmToken {
     en = 'If your email (username) has not been changed, please check the app to request a new email confirmation token.',
@@ -507,6 +518,7 @@ const confirmEmail = async (req: Request, res: Response): Promise<void> => {
     de = 'Wenn Ihre E-Mail (Benutzername) nicht geändert wurde, überprüfen Sie bitte die App, um einen neuen E-Mail-Bestätigungstoken anzufordern.',
     pt = 'Se seu email (nome de usuário) não foi alterado, verifique o aplicativo para solicitar um novo token de confirmação de email.',
     cs = 'Pokud se e-mail (uživatelské jméno) nezměnil, zkontrolujte aplikaci, zda požádáte o nový token pro potvrzení e-mailu.',
+    fi = 'Jos sähköpostisi (käyttäjänimi) ei ole muuttunut, tarkista sovellus pyytääksesi uuden sähköpostivahvistustokenin.',
   }
 
   const { token, username } = req.params
@@ -716,6 +728,7 @@ const comparePassword = async (
     de = 'Aktuelles Passwort falsch',
     pt = 'Senha atual errada',
     cs = 'Aktuální heslo špatně',
+    fi = 'Nykyinen salasana väärin',
   }
   const comparePassword = async function (
     this: IUser,
@@ -969,36 +982,6 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
 //   }
 // }
 
-const sendMail = (
-  subject: string,
-  message: string,
-  username: IUser['username'],
-  language: ELanguage,
-  link: string
-) => {
-  return new Promise((resolve, reject) => {
-    transporter.sendMail(
-      {
-        from: process.env.NODEMAILER_USER,
-        to: username,
-        subject: subject,
-        text: message + ': ' + link || link,
-      },
-      (error: Error, info: { response: unknown }) => {
-        if (error) {
-          console.log(error)
-          reject(error)
-          return error
-        } else {
-          console.log('Email sent: ' + info.response)
-          resolve(info.response)
-          return info.response
-        }
-      }
-    )
-  })
-}
-
 const registerUser = async (req: Request, res: Response): Promise<void> => {
   //User.collection.dropIndex('jokes_1')
   // try {
@@ -1010,6 +993,7 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
     de = 'Benutzer registriert. Bitte überprüfen Sie Ihre E-Mail für den Bestätigungslink',
     pt = 'Usuário registrado. Por favor, verifique seu email para o link de verificação',
     cs = 'Uživatel registrován. Prosím, zkontrolujte svůj email pro ověřovací odkaz',
+    fi = 'Käyttäjä rekisteröity. Tarkista sähköpostisi vahvistuslinkkiä varten',
   }
 
   const { name, username, password, jokes, language } = req.body
@@ -1022,6 +1006,7 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
     de = 'Registrierung fehlgeschlagen',
     pt = 'Registro falhou',
     cs = 'Registrace se nezdařila',
+    fi = 'Rekisteröinti epäonnistui',
   }
   enum EPleaseCheckYourEmailIfYouHaveAlreadyRegistered {
     en = 'Please check your email if you have already registered',
@@ -1030,6 +1015,7 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
     de = 'Bitte überprüfen Sie Ihre E-Mail, wenn Sie sich bereits registriert haben',
     pt = 'Por favor, verifique seu email se você já se registrou',
     cs = 'Zkontrolujte svůj email, pokud jste se již zaregistrovali',
+    fi = 'Tarkista sähköpostisi, jos olet jo rekisteröitynyt',
   }
   try {
     bcrypt
@@ -1194,6 +1180,7 @@ const refreshExpiredToken = async (
     de = 'Neuer Token an E-Mail gesendet',
     pt = 'Novo token enviado para o email',
     cs = 'Nový token odeslán na email',
+    fi = 'Uusi token lähetetty sähköpostitse',
   }
   enum EUserNotVerified {
     en = 'User not verified. Please check your email',
@@ -1202,6 +1189,7 @@ const refreshExpiredToken = async (
     de = 'Benutzer nicht verifiziert. Bitte überprüfen Sie Ihre E-Mail',
     pt = 'Usuário não verificado. Por favor, verifique seu email',
     cs = 'Uživatel není ověřen. Zkontrolujte svůj email',
+    fi = 'Käyttäjää ei ole vahvistettu. Tarkista sähköpostisi',
   }
 
   return new Promise((resolve, reject) => {
@@ -1616,6 +1604,7 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
         de = 'Verifizierung erfolgreich',
         pt = 'Verificação bem-sucedida',
         cs = 'Úspěšná verifikace',
+        fi = 'Vahvistus onnistui',
       }
 
       enum EAccountSuccessfullyVerified {
@@ -1625,6 +1614,7 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
         de = 'Ihr Konto wurde erfolgreich verifiziert',
         pt = 'Sua conta foi verificada com sucesso',
         cs = 'Váš účet byl úspěšně ověřen',
+        fi = 'Tilisi on vahvistettu onnistuneesti',
       }
 
       // let urlParams =
@@ -1701,6 +1691,7 @@ const verifyEmailToken = async (req: Request, res: Response): Promise<void> => {
         de = 'Bereits verifiziert oder Verifizierungstoken abgelaufen',
         pt = 'Já verificado ou token de verificação expirado',
         cs = 'Již ověřeno nebo vypršel ověřovací token',
+        fi = 'Jo vahvistettu, tai vahvistustoken on vanhentunut',
       }
       // const urlParams =
       //   typeof window !== 'undefined'
@@ -2073,6 +2064,7 @@ const resetPasswordToken = async (req: Request, res: Response): Promise<void> =>
     de = 'Passwort erfolgreich zurückgesetzt',
     pt = 'Redefinição de senha bem-sucedida',
     cs = 'Obnovení hesla bylo úspěšné',
+    fi = 'Salasanan palautus onnistui',
   }
   enum EPasswordsDoNotMatch {
     en = 'Passwords do not match',
@@ -2081,6 +2073,7 @@ const resetPasswordToken = async (req: Request, res: Response): Promise<void> =>
     de = 'Passwörter stimmen nicht überein',
     pt = 'As senhas não coincidem',
     cs = 'Hesla se neshodují',
+    fi = 'Salasanat eivät täsmää',
   }
 
   try {

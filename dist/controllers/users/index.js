@@ -19,20 +19,9 @@ const quiz_1 = require("../../models/quiz");
 const todo_1 = require("../../models/todo");
 const joke_1 = require("../../models/joke");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const flatted = require('flatted');
-const crypto = require('crypto');
-const JWT_SECRET = process.env.JWT_SECRET;
+const email_1 = require("../email");
 const dotenv = require('dotenv');
 dotenv.config();
-const nodemailer = require('nodemailer');
-const transporter = nodemailer.createTransport({
-    host: process.env.NODEMAILER_HOST,
-    port: process.env.NODEMAILER_PORT,
-    auth: {
-        user: process.env.NODEMAILER_USER,
-        pass: process.env.NODEMAILER_PASSWORD,
-    },
-});
 var EError;
 (function (EError) {
     EError["en"] = "An error occurred";
@@ -41,33 +30,26 @@ var EError;
     EError["de"] = "Ein Fehler ist aufgetreten";
     EError["pt"] = "Ocorreu um erro";
     EError["cs"] = "Do\u0161lo k chyb\u011B";
+    EError["fi"] = "Virhe tapahtui";
 })(EError || (EError = {}));
-var ELanguage;
-(function (ELanguage) {
-    ELanguage["en"] = "en";
-    ELanguage["es"] = "es";
-    ELanguage["fr"] = "fr";
-    ELanguage["de"] = "de";
-    ELanguage["pt"] = "pt";
-    ELanguage["cs"] = "cs";
-})(ELanguage || (ELanguage = {}));
-var ETheComediansCompanion;
-(function (ETheComediansCompanion) {
-    ETheComediansCompanion["en"] = "The Comedian's Companion";
-    ETheComediansCompanion["es"] = "El Compa\u00F1ero del Comediante";
-    ETheComediansCompanion["fr"] = "Le Compagnon du Com\u00E9dien";
-    ETheComediansCompanion["de"] = "Der Begleiter des Komikers";
-    ETheComediansCompanion["pt"] = "O Companheiro do Comediante";
-    ETheComediansCompanion["cs"] = "Spole\u010Dn\u00EDk komika";
-})(ETheComediansCompanion || (ETheComediansCompanion = {}));
+// enum ELanguage {
+//   en = 'en',
+//   es = 'es',
+//   fr = 'fr',
+//   de = 'de',
+//   pt = 'pt',
+//   cs = 'cs',
+//   fi = 'fi',
+// }
 var EJenniinaFi;
 (function (EJenniinaFi) {
-    EJenniinaFi["en"] = "Jenniina.fi React Site";
-    EJenniinaFi["es"] = "Sitio React Jenniina.fi";
-    EJenniinaFi["fr"] = "Site React Jenniina.fi";
-    EJenniinaFi["de"] = "Jenniina.fi React Site";
-    EJenniinaFi["pt"] = "Site React Jenniina.fi";
-    EJenniinaFi["cs"] = "Jenniina.fi React Site";
+    EJenniinaFi["en"] = "Jenniina.fi React";
+    EJenniinaFi["es"] = "React Jenniina.fi";
+    EJenniinaFi["fr"] = "React Jenniina.fi";
+    EJenniinaFi["de"] = "Jenniina.fi React";
+    EJenniinaFi["pt"] = "React Jenniina.fi";
+    EJenniinaFi["cs"] = "Jenniina.fi React";
+    EJenniinaFi["fi"] = "Jenniina.fi React";
 })(EJenniinaFi || (EJenniinaFi = {}));
 var EBackToTheApp;
 (function (EBackToTheApp) {
@@ -77,6 +59,7 @@ var EBackToTheApp;
     EBackToTheApp["de"] = "Zur\u00FCck zur App";
     EBackToTheApp["pt"] = "Voltar para o aplicativo";
     EBackToTheApp["cs"] = "Zp\u011Bt do aplikace";
+    EBackToTheApp["fi"] = "Takaisin sovellukseen";
 })(EBackToTheApp || (EBackToTheApp = {}));
 var EErrorCreatingToken;
 (function (EErrorCreatingToken) {
@@ -86,6 +69,7 @@ var EErrorCreatingToken;
     EErrorCreatingToken["de"] = "Fehler beim Erstellen des Tokens";
     EErrorCreatingToken["pt"] = "Erro ao criar token";
     EErrorCreatingToken["cs"] = "Chyba p\u0159i vytv\u00E1\u0159en\u00ED tokenu";
+    EErrorCreatingToken["fi"] = "Virhe luotaessa tokenia";
 })(EErrorCreatingToken || (EErrorCreatingToken = {}));
 var EHelloWelcome;
 (function (EHelloWelcome) {
@@ -95,6 +79,7 @@ var EHelloWelcome;
     EHelloWelcome["de"] = "Hallo, willkommen auf der Website Jenniina.fi.";
     EHelloWelcome["pt"] = "Ol\u00E1, bem-vindo ao site Jenniina.fi.";
     EHelloWelcome["cs"] = "Ahoj, v\u00EDtejte na webu Jenniina.fi.";
+    EHelloWelcome["fi"] = "Hei, tervetuloa Jenniina.fi-sivustolle.";
 })(EHelloWelcome || (EHelloWelcome = {}));
 var EEmailMessage;
 (function (EEmailMessage) {
@@ -104,6 +89,7 @@ var EEmailMessage;
     EEmailMessage["de"] = "Bitte \u00FCberpr\u00FCfen Sie Ihre E-Mail";
     EEmailMessage["pt"] = "Por favor, verifique seu email";
     EEmailMessage["cs"] = "Pros\u00EDm, ov\u011B\u0159te sv\u016Fj email";
+    EEmailMessage["fi"] = "Vahvista s\u00E4hk\u00F6postisi";
 })(EEmailMessage || (EEmailMessage = {}));
 var EErrorSendingMail;
 (function (EErrorSendingMail) {
@@ -113,6 +99,7 @@ var EErrorSendingMail;
     EErrorSendingMail["de"] = "Fehler beim Senden der E-Mail";
     EErrorSendingMail["pt"] = "Erro ao enviar email";
     EErrorSendingMail["cs"] = "Chyba p\u0159i odes\u00EDl\u00E1n\u00ED emailu";
+    EErrorSendingMail["fi"] = "Virhe s\u00E4hk\u00F6postin l\u00E4hetyksess\u00E4";
 })(EErrorSendingMail || (EErrorSendingMail = {}));
 var ETokenSent;
 (function (ETokenSent) {
@@ -122,6 +109,7 @@ var ETokenSent;
     ETokenSent["de"] = "Token gesendet";
     ETokenSent["pt"] = "Token enviado";
     ETokenSent["cs"] = "Token odesl\u00E1n";
+    ETokenSent["fi"] = "Token l\u00E4hetetty";
 })(ETokenSent || (ETokenSent = {}));
 var ENoTokenProvided;
 (function (ENoTokenProvided) {
@@ -131,6 +119,7 @@ var ENoTokenProvided;
     ENoTokenProvided["de"] = "Kein Token angegeben";
     ENoTokenProvided["pt"] = "Nenhum token fornecido";
     ENoTokenProvided["cs"] = "Nebyl poskytnut \u017E\u00E1dn\u00FD token";
+    ENoTokenProvided["fi"] = "Ei toimitettu tokenia";
 })(ENoTokenProvided || (ENoTokenProvided = {}));
 var ETokenVerified;
 (function (ETokenVerified) {
@@ -140,6 +129,7 @@ var ETokenVerified;
     ETokenVerified["de"] = "Token verifiziert";
     ETokenVerified["pt"] = "Token verificado";
     ETokenVerified["cs"] = "Token ov\u011B\u0159en";
+    ETokenVerified["fi"] = "Token tarkistettu";
 })(ETokenVerified || (ETokenVerified = {}));
 var EPasswordReset;
 (function (EPasswordReset) {
@@ -149,6 +139,7 @@ var EPasswordReset;
     EPasswordReset["de"] = "Passwort zur\u00FCcksetzen";
     EPasswordReset["pt"] = "Redefini\u00E7\u00E3o de senha";
     EPasswordReset["cs"] = "Obnoven\u00ED hesla";
+    EPasswordReset["fi"] = "Salasanan palautus";
 })(EPasswordReset || (EPasswordReset = {}));
 var EResetPassword;
 (function (EResetPassword) {
@@ -158,6 +149,7 @@ var EResetPassword;
     EResetPassword["de"] = "Passwort zur\u00FCcksetzen";
     EResetPassword["pt"] = "Redefinir senha";
     EResetPassword["cs"] = "Obnovit heslo";
+    EResetPassword["fi"] = "Nollaa salasana";
 })(EResetPassword || (EResetPassword = {}));
 var ENewPassword;
 (function (ENewPassword) {
@@ -167,6 +159,7 @@ var ENewPassword;
     ENewPassword["de"] = "Neues Kennwort";
     ENewPassword["pt"] = "Nova senha";
     ENewPassword["cs"] = "Nov\u00E9 heslo";
+    ENewPassword["fi"] = "Uusi salasana";
 })(ENewPassword || (ENewPassword = {}));
 var EConfirmPassword;
 (function (EConfirmPassword) {
@@ -176,6 +169,7 @@ var EConfirmPassword;
     EConfirmPassword["de"] = "Kennwort best\u00E4tigen";
     EConfirmPassword["pt"] = "Confirme a Senha";
     EConfirmPassword["cs"] = "Potvr\u010Fte heslo";
+    EConfirmPassword["fi"] = "Vahvista salasana";
 })(EConfirmPassword || (EConfirmPassword = {}));
 var EInvalidLoginCredentials;
 (function (EInvalidLoginCredentials) {
@@ -185,6 +179,7 @@ var EInvalidLoginCredentials;
     EInvalidLoginCredentials["de"] = "Ung\u00FCltige Anmeldeinformationen";
     EInvalidLoginCredentials["pt"] = "Credenciais de login inv\u00E1lidas";
     EInvalidLoginCredentials["cs"] = "Neplatn\u00E9 p\u0159ihla\u0161ovac\u00ED \u00FAdaje";
+    EInvalidLoginCredentials["fi"] = "Virheelliset kirjautumistiedot";
 })(EInvalidLoginCredentials || (EInvalidLoginCredentials = {}));
 var EInvalidOrMissingToken;
 (function (EInvalidOrMissingToken) {
@@ -194,6 +189,7 @@ var EInvalidOrMissingToken;
     EInvalidOrMissingToken["de"] = "Ung\u00FCltige oder fehlende Anfrage";
     EInvalidOrMissingToken["pt"] = "Solicita\u00E7\u00E3o inv\u00E1lida ou ausente";
     EInvalidOrMissingToken["cs"] = "Neplatn\u00FD nebo chyb\u011Bj\u00EDc\u00ED po\u017Eadavek";
+    EInvalidOrMissingToken["fi"] = "Virheellinen tai puuttuva pyynt\u00F6";
 })(EInvalidOrMissingToken || (EInvalidOrMissingToken = {}));
 var EPleaseCheckYourEmailIfYouHaveAlreadyRegistered;
 (function (EPleaseCheckYourEmailIfYouHaveAlreadyRegistered) {
@@ -203,6 +199,7 @@ var EPleaseCheckYourEmailIfYouHaveAlreadyRegistered;
     EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["de"] = "Bitte \u00FCberpr\u00FCfen Sie Ihre E-Mail, wenn Sie sich bereits registriert haben";
     EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["pt"] = "Por favor, verifique seu email se voc\u00EA j\u00E1 se registrou";
     EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["cs"] = "Zkontrolujte sv\u016Fj email, pokud jste se ji\u017E zaregistrovali";
+    EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["fi"] = "Tarkista s\u00E4hk\u00F6postisi, jos olet jo rekister\u00F6itynyt";
 })(EPleaseCheckYourEmailIfYouHaveAlreadyRegistered || (EPleaseCheckYourEmailIfYouHaveAlreadyRegistered = {}));
 var ELogInAtTheAppOrRequestANewPasswordResetToken;
 (function (ELogInAtTheAppOrRequestANewPasswordResetToken) {
@@ -212,6 +209,7 @@ var ELogInAtTheAppOrRequestANewPasswordResetToken;
     ELogInAtTheAppOrRequestANewPasswordResetToken["de"] = "Melden Sie sich in der App an oder fordern Sie einen neuen Token zum Zur\u00FCcksetzen des Passworts an";
     ELogInAtTheAppOrRequestANewPasswordResetToken["pt"] = "Fa\u00E7a login no aplicativo ou solicite um novo token de redefini\u00E7\u00E3o de senha";
     ELogInAtTheAppOrRequestANewPasswordResetToken["cs"] = "P\u0159ihlaste se do aplikace nebo po\u017E\u00E1dejte o nov\u00FD token pro obnoven\u00ED hesla";
+    ELogInAtTheAppOrRequestANewPasswordResetToken["fi"] = "Kirjaudu sovellukseen tai pyyd\u00E4 uusi salasanan palautustoken";
 })(ELogInAtTheAppOrRequestANewPasswordResetToken || (ELogInAtTheAppOrRequestANewPasswordResetToken = {}));
 var EAccessDeniedAdminPrivilegeRequired;
 (function (EAccessDeniedAdminPrivilegeRequired) {
@@ -221,6 +219,7 @@ var EAccessDeniedAdminPrivilegeRequired;
     EAccessDeniedAdminPrivilegeRequired["de"] = "Zugriff verweigert. Admin-Berechtigung erforderlich.";
     EAccessDeniedAdminPrivilegeRequired["pt"] = "Acesso negado. Privil\u00E9gio de administrador necess\u00E1rio.";
     EAccessDeniedAdminPrivilegeRequired["cs"] = "P\u0159\u00EDstup odep\u0159en. Vy\u017Eaduje se opr\u00E1vn\u011Bn\u00ED spr\u00E1vce.";
+    EAccessDeniedAdminPrivilegeRequired["fi"] = "P\u00E4\u00E4sy ev\u00E4tty. Vaaditaan yll\u00E4pit\u00E4j\u00E4n oikeudet.";
 })(EAccessDeniedAdminPrivilegeRequired || (EAccessDeniedAdminPrivilegeRequired = {}));
 var EAuthenticationFailed;
 (function (EAuthenticationFailed) {
@@ -230,6 +229,7 @@ var EAuthenticationFailed;
     EAuthenticationFailed["de"] = "Authentifizierung fehlgeschlagen";
     EAuthenticationFailed["pt"] = "Autentica\u00E7\u00E3o falhou";
     EAuthenticationFailed["cs"] = "Autentizace selhala";
+    EAuthenticationFailed["fi"] = "Todennus ep\u00E4onnistui";
 })(EAuthenticationFailed || (EAuthenticationFailed = {}));
 var EUserAdded;
 (function (EUserAdded) {
@@ -239,6 +239,7 @@ var EUserAdded;
     EUserAdded["de"] = "Benutzer hinzugef\u00FCgt";
     EUserAdded["pt"] = "Usu\u00E1rio adicionado";
     EUserAdded["cs"] = "U\u017Eivatel p\u0159id\u00E1n";
+    EUserAdded["fi"] = "K\u00E4ytt\u00E4j\u00E4 lis\u00E4tty";
 })(EUserAdded || (EUserAdded = {}));
 var EUserUpdated;
 (function (EUserUpdated) {
@@ -248,6 +249,7 @@ var EUserUpdated;
     EUserUpdated["de"] = "Benutzer aktualisiert";
     EUserUpdated["pt"] = "Usu\u00E1rio atualizado";
     EUserUpdated["cs"] = "U\u017Eivatel aktualizov\u00E1n";
+    EUserUpdated["fi"] = "K\u00E4ytt\u00E4j\u00E4 p\u00E4ivitetty";
 })(EUserUpdated || (EUserUpdated = {}));
 var EUserDeleted;
 (function (EUserDeleted) {
@@ -257,6 +259,7 @@ var EUserDeleted;
     EUserDeleted["de"] = "Benutzer gel\u00F6scht";
     EUserDeleted["pt"] = "Usu\u00E1rio exclu\u00EDdo";
     EUserDeleted["cs"] = "U\u017Eivatel smaz\u00E1n";
+    EUserDeleted["fi"] = "K\u00E4ytt\u00E4j\u00E4 poistettu";
 })(EUserDeleted || (EUserDeleted = {}));
 var EYouHaveLoggedOut;
 (function (EYouHaveLoggedOut) {
@@ -266,6 +269,7 @@ var EYouHaveLoggedOut;
     EYouHaveLoggedOut["de"] = "Sie haben sich abgemeldet";
     EYouHaveLoggedOut["pt"] = "Voc\u00EA saiu";
     EYouHaveLoggedOut["cs"] = "Odhl\u00E1sili jste se";
+    EYouHaveLoggedOut["fi"] = "Olet kirjautunut ulos";
 })(EYouHaveLoggedOut || (EYouHaveLoggedOut = {}));
 var EUsernameRequired;
 (function (EUsernameRequired) {
@@ -275,6 +279,7 @@ var EUsernameRequired;
     EUsernameRequired["de"] = "Benutzername erforderlich";
     EUsernameRequired["pt"] = "Nome de usu\u00E1rio obrigat\u00F3rio";
     EUsernameRequired["cs"] = "Vy\u017Eadov\u00E1no u\u017Eivatelsk\u00E9 jm\u00E9no";
+    EUsernameRequired["fi"] = "K\u00E4ytt\u00E4j\u00E4tunnus vaaditaan";
 })(EUsernameRequired || (EUsernameRequired = {}));
 var ESuccessfullyLoggedIn;
 (function (ESuccessfullyLoggedIn) {
@@ -284,6 +289,7 @@ var ESuccessfullyLoggedIn;
     ESuccessfullyLoggedIn["de"] = "Erfolgreich angemeldet";
     ESuccessfullyLoggedIn["pt"] = "Logado com sucesso";
     ESuccessfullyLoggedIn["cs"] = "\u00DAsp\u011B\u0161n\u011B p\u0159ihl\u00E1\u0161en";
+    ESuccessfullyLoggedIn["fi"] = "Kirjauduttu onnistuneesti";
 })(ESuccessfullyLoggedIn || (ESuccessfullyLoggedIn = {}));
 const generateToken = (id) => __awaiter(void 0, void 0, void 0, function* () {
     if (!id)
@@ -396,7 +402,7 @@ exports.checkIfAdmin = checkIfAdmin;
 const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield user_1.User.find();
-        res.status(200).json({ users });
+        res.status(200).json(users);
     }
     catch (error) {
         console.error('Error:', error);
@@ -462,6 +468,7 @@ const updateUsername = (req, res) => __awaiter(void 0, void 0, void 0, function*
         EEmailConfirmation["de"] = "E-Mail-Best\u00E4tigung, Jenniina.fi";
         EEmailConfirmation["pt"] = "Confirma\u00E7\u00E3o de email, Jenniina.fi";
         EEmailConfirmation["cs"] = "Potvrzen\u00ED e-mailu, Jenniina.fi";
+        EEmailConfirmation["fi"] = "S\u00E4hk\u00F6postin vahvistus, Jenniina.fi";
     })(EEmailConfirmation || (EEmailConfirmation = {}));
     let EConfirmEmail;
     (function (EConfirmEmail) {
@@ -471,6 +478,7 @@ const updateUsername = (req, res) => __awaiter(void 0, void 0, void 0, function*
         EConfirmEmail["de"] = "Bitte best\u00E4tigen Sie Ihre E-Mail-Adresse, indem Sie auf den Link klicken";
         EConfirmEmail["pt"] = "Por favor, confirme seu endere\u00E7o de email clicando no link";
         EConfirmEmail["cs"] = "Potvr\u010Fte svou e-mailovou adresu kliknut\u00EDm na odkaz";
+        EConfirmEmail["fi"] = "Vahvista s\u00E4hk\u00F6postiosoitteesi napsauttamalla linkki\u00E4";
     })(EConfirmEmail || (EConfirmEmail = {}));
     let EUpdatePending;
     (function (EUpdatePending) {
@@ -480,6 +488,7 @@ const updateUsername = (req, res) => __awaiter(void 0, void 0, void 0, function*
         EUpdatePending["de"] = "Benutzername Update ausstehend, bitte \u00FCberpr\u00FCfen Sie Ihre E-Mail f\u00FCr einen Best\u00E4tigungslink.";
         EUpdatePending["pt"] = "Atualiza\u00E7\u00E3o do nome de usu\u00E1rio pendente, verifique seu email para um link de confirma\u00E7\u00E3o.";
         EUpdatePending["cs"] = "Aktualizace u\u017Eivatelsk\u00E9ho jm\u00E9na \u010Dek\u00E1, zkontrolujte sv\u016Fj e-mail na potvrzovac\u00ED odkaz.";
+        EUpdatePending["fi"] = "K\u00E4ytt\u00E4j\u00E4tunnuksen p\u00E4ivitys odottaa, tarkista s\u00E4hk\u00F6postisi vahvistuslinkki\u00E4 varten.";
     })(EUpdatePending || (EUpdatePending = {}));
     try {
         const { body } = req;
@@ -496,7 +505,7 @@ const updateUsername = (req, res) => __awaiter(void 0, void 0, void 0, function*
             const link = `${process.env.BASE_URI}/api/users/${username}/confirm-email/${token}?lang=${user.language}`;
             const language = user.language || 'en';
             // Send confirmation email to new address
-            yield sendMail(subject, message, username, language, link);
+            yield (0, email_1.sendMail)(subject, message, username, language, link);
             res.status(200).json({
                 success: true,
                 message: EUpdatePending[user.language || 'en'],
@@ -528,6 +537,7 @@ const confirmEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         EEmailConfirmed["de"] = "E-Mail best\u00E4tigt";
         EEmailConfirmed["pt"] = "Email confirmado";
         EEmailConfirmed["cs"] = "E-mail potvrzeno";
+        EEmailConfirmed["fi"] = "S\u00E4hk\u00F6posti vahvistettu";
     })(EEmailConfirmed || (EEmailConfirmed = {}));
     let EEmailHasBeenConfirmed;
     (function (EEmailHasBeenConfirmed) {
@@ -537,6 +547,7 @@ const confirmEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         EEmailHasBeenConfirmed["de"] = "Ihre E-Mail wurde best\u00E4tigt.";
         EEmailHasBeenConfirmed["pt"] = "Seu email foi confirmado.";
         EEmailHasBeenConfirmed["cs"] = "V\u00E1\u0161 e-mail byl potvrzen.";
+        EEmailHasBeenConfirmed["fi"] = "S\u00E4hk\u00F6posti on vahvistettu.";
     })(EEmailHasBeenConfirmed || (EEmailHasBeenConfirmed = {}));
     let ELogInAtTheAppOrRequestANewEmailConfirmToken;
     (function (ELogInAtTheAppOrRequestANewEmailConfirmToken) {
@@ -546,6 +557,7 @@ const confirmEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         ELogInAtTheAppOrRequestANewEmailConfirmToken["de"] = "Wenn Ihre E-Mail (Benutzername) nicht ge\u00E4ndert wurde, \u00FCberpr\u00FCfen Sie bitte die App, um einen neuen E-Mail-Best\u00E4tigungstoken anzufordern.";
         ELogInAtTheAppOrRequestANewEmailConfirmToken["pt"] = "Se seu email (nome de usu\u00E1rio) n\u00E3o foi alterado, verifique o aplicativo para solicitar um novo token de confirma\u00E7\u00E3o de email.";
         ELogInAtTheAppOrRequestANewEmailConfirmToken["cs"] = "Pokud se e-mail (u\u017Eivatelsk\u00E9 jm\u00E9no) nezm\u011Bnil, zkontrolujte aplikaci, zda po\u017E\u00E1d\u00E1te o nov\u00FD token pro potvrzen\u00ED e-mailu.";
+        ELogInAtTheAppOrRequestANewEmailConfirmToken["fi"] = "Jos s\u00E4hk\u00F6postisi (k\u00E4ytt\u00E4j\u00E4nimi) ei ole muuttunut, tarkista sovellus pyyt\u00E4\u00E4ksesi uuden s\u00E4hk\u00F6postivahvistustokenin.";
     })(ELogInAtTheAppOrRequestANewEmailConfirmToken || (ELogInAtTheAppOrRequestANewEmailConfirmToken = {}));
     const { token, username } = req.params;
     const language = req.query.lang || 'en';
@@ -742,6 +754,7 @@ const comparePassword = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         ECurrentPasswordWrong["de"] = "Aktuelles Passwort falsch";
         ECurrentPasswordWrong["pt"] = "Senha atual errada";
         ECurrentPasswordWrong["cs"] = "Aktu\u00E1ln\u00ED heslo \u0161patn\u011B";
+        ECurrentPasswordWrong["fi"] = "Nykyinen salasana v\u00E4\u00E4rin";
     })(ECurrentPasswordWrong || (ECurrentPasswordWrong = {}));
     const comparePassword = function (candidatePassword) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -930,7 +943,7 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
             const link = `${process.env.BASE_URI}/api/users/reset/${token}?lang=${language}`;
             //User.findOneAndUpdate({ username }, { $set: { resetToken: token } })
             yield user_1.User.findOneAndUpdate({ username }, { resetToken: token });
-            sendMail(EPasswordReset[language], EResetPassword[language], username, language, link)
+            (0, email_1.sendMail)(EPasswordReset[language], EResetPassword[language], username, language, link)
                 .then((result) => {
                 console.log('result ', result);
                 res.status(200).json({
@@ -995,27 +1008,6 @@ exports.forgotPassword = forgotPassword;
 //     res.status(500).json({ message: EError[(req.body.language as ELanguage) || 'en'] })
 //   }
 // }
-const sendMail = (subject, message, username, language, link) => {
-    return new Promise((resolve, reject) => {
-        transporter.sendMail({
-            from: process.env.NODEMAILER_USER,
-            to: username,
-            subject: subject,
-            text: message + ': ' + link || link,
-        }, (error, info) => {
-            if (error) {
-                console.log(error);
-                reject(error);
-                return error;
-            }
-            else {
-                console.log('Email sent: ' + info.response);
-                resolve(info.response);
-                return info.response;
-            }
-        });
-    });
-};
 const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //User.collection.dropIndex('jokes_1')
     // try {
@@ -1027,6 +1019,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         EMessage["de"] = "Benutzer registriert. Bitte \u00FCberpr\u00FCfen Sie Ihre E-Mail f\u00FCr den Best\u00E4tigungslink";
         EMessage["pt"] = "Usu\u00E1rio registrado. Por favor, verifique seu email para o link de verifica\u00E7\u00E3o";
         EMessage["cs"] = "U\u017Eivatel registrov\u00E1n. Pros\u00EDm, zkontrolujte sv\u016Fj email pro ov\u011B\u0159ovac\u00ED odkaz";
+        EMessage["fi"] = "K\u00E4ytt\u00E4j\u00E4 rekister\u00F6ity. Tarkista s\u00E4hk\u00F6postisi vahvistuslinkki\u00E4 varten";
     })(EMessage || (EMessage = {}));
     const { name, username, password, jokes, language } = req.body;
     const saltRounds = 10;
@@ -1038,6 +1031,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         ERegistrationFailed["de"] = "Registrierung fehlgeschlagen";
         ERegistrationFailed["pt"] = "Registro falhou";
         ERegistrationFailed["cs"] = "Registrace se nezda\u0159ila";
+        ERegistrationFailed["fi"] = "Rekister\u00F6inti ep\u00E4onnistui";
     })(ERegistrationFailed || (ERegistrationFailed = {}));
     let EPleaseCheckYourEmailIfYouHaveAlreadyRegistered;
     (function (EPleaseCheckYourEmailIfYouHaveAlreadyRegistered) {
@@ -1047,6 +1041,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["de"] = "Bitte \u00FCberpr\u00FCfen Sie Ihre E-Mail, wenn Sie sich bereits registriert haben";
         EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["pt"] = "Por favor, verifique seu email se voc\u00EA j\u00E1 se registrou";
         EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["cs"] = "Zkontrolujte sv\u016Fj email, pokud jste se ji\u017E zaregistrovali";
+        EPleaseCheckYourEmailIfYouHaveAlreadyRegistered["fi"] = "Tarkista s\u00E4hk\u00F6postisi, jos olet jo rekister\u00F6itynyt";
     })(EPleaseCheckYourEmailIfYouHaveAlreadyRegistered || (EPleaseCheckYourEmailIfYouHaveAlreadyRegistered = {}));
     try {
         bcrypt_1.default
@@ -1085,7 +1080,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     const token = yield generateToken(newUser._id);
                     const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${language}`;
                     newUser.token = token;
-                    sendMail(EHelloWelcome[language], EEmailMessage[language], username, language, link)
+                    (0, email_1.sendMail)(EHelloWelcome[language], EEmailMessage[language], username, language, link)
                         .then((result) => {
                         newUser.save().then((user) => {
                             res.status(201).json({
@@ -1176,6 +1171,7 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
         ENewTokenSentToEmail["de"] = "Neuer Token an E-Mail gesendet";
         ENewTokenSentToEmail["pt"] = "Novo token enviado para o email";
         ENewTokenSentToEmail["cs"] = "Nov\u00FD token odesl\u00E1n na email";
+        ENewTokenSentToEmail["fi"] = "Uusi token l\u00E4hetetty s\u00E4hk\u00F6postitse";
     })(ENewTokenSentToEmail || (ENewTokenSentToEmail = {}));
     let EUserNotVerified;
     (function (EUserNotVerified) {
@@ -1185,6 +1181,7 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
         EUserNotVerified["de"] = "Benutzer nicht verifiziert. Bitte \u00FCberpr\u00FCfen Sie Ihre E-Mail";
         EUserNotVerified["pt"] = "Usu\u00E1rio n\u00E3o verificado. Por favor, verifique seu email";
         EUserNotVerified["cs"] = "U\u017Eivatel nen\u00ED ov\u011B\u0159en. Zkontrolujte sv\u016Fj email";
+        EUserNotVerified["fi"] = "K\u00E4ytt\u00E4j\u00E4\u00E4 ei ole vahvistettu. Tarkista s\u00E4hk\u00F6postisi";
     })(EUserNotVerified || (EUserNotVerified = {}));
     return new Promise((resolve, reject) => {
         var _a;
@@ -1200,7 +1197,7 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                         token = yield generateToken(_id);
                         if (!(user === null || user === void 0 ? void 0 : user.verified)) {
                             const link = `${process.env.BASE_URI}/api/users/verify/${token}?lang=${body.language}`;
-                            sendMail(EHelloWelcome[body.language], EEmailMessage[body.language], body.username, body.language, link)
+                            (0, email_1.sendMail)(EHelloWelcome[body.language], EEmailMessage[body.language], body.username, body.language, link)
                                 .then((r) => {
                                 reject({
                                     success: false,
@@ -1272,7 +1269,7 @@ const refreshExpiredToken = (req, _id) => __awaiter(void 0, void 0, void 0, func
                         user
                             .save()
                             .then(() => {
-                            sendMail(EHelloWelcome[body.language], EEmailMessage[body.language], user.username, body.language, link);
+                            (0, email_1.sendMail)(EHelloWelcome[body.language], EEmailMessage[body.language], user.username, body.language, link);
                         })
                             .then((r) => {
                             resolve({
@@ -1547,6 +1544,7 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 EVerificationSuccessful["de"] = "Verifizierung erfolgreich";
                 EVerificationSuccessful["pt"] = "Verifica\u00E7\u00E3o bem-sucedida";
                 EVerificationSuccessful["cs"] = "\u00DAsp\u011B\u0161n\u00E1 verifikace";
+                EVerificationSuccessful["fi"] = "Vahvistus onnistui";
             })(EVerificationSuccessful || (EVerificationSuccessful = {}));
             let EAccountSuccessfullyVerified;
             (function (EAccountSuccessfullyVerified) {
@@ -1556,6 +1554,7 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 EAccountSuccessfullyVerified["de"] = "Ihr Konto wurde erfolgreich verifiziert";
                 EAccountSuccessfullyVerified["pt"] = "Sua conta foi verificada com sucesso";
                 EAccountSuccessfullyVerified["cs"] = "V\u00E1\u0161 \u00FA\u010Det byl \u00FAsp\u011B\u0161n\u011B ov\u011B\u0159en";
+                EAccountSuccessfullyVerified["fi"] = "Tilisi on vahvistettu onnistuneesti";
             })(EAccountSuccessfullyVerified || (EAccountSuccessfullyVerified = {}));
             // let urlParams =
             //   typeof window !== 'undefined'
@@ -1624,6 +1623,7 @@ const verifyEmailToken = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 EVerificationFailed["de"] = "Bereits verifiziert oder Verifizierungstoken abgelaufen";
                 EVerificationFailed["pt"] = "J\u00E1 verificado ou token de verifica\u00E7\u00E3o expirado";
                 EVerificationFailed["cs"] = "Ji\u017E ov\u011B\u0159eno nebo vypr\u0161el ov\u011B\u0159ovac\u00ED token";
+                EVerificationFailed["fi"] = "Jo vahvistettu, tai vahvistustoken on vanhentunut";
             })(EVerificationFailed || (EVerificationFailed = {}));
             // const urlParams =
             //   typeof window !== 'undefined'
@@ -1983,6 +1983,7 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
         EPasswordResetSuccessfully["de"] = "Passwort erfolgreich zur\u00FCckgesetzt";
         EPasswordResetSuccessfully["pt"] = "Redefini\u00E7\u00E3o de senha bem-sucedida";
         EPasswordResetSuccessfully["cs"] = "Obnoven\u00ED hesla bylo \u00FAsp\u011B\u0161n\u00E9";
+        EPasswordResetSuccessfully["fi"] = "Salasanan palautus onnistui";
     })(EPasswordResetSuccessfully || (EPasswordResetSuccessfully = {}));
     let EPasswordsDoNotMatch;
     (function (EPasswordsDoNotMatch) {
@@ -1992,6 +1993,7 @@ const resetPasswordToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
         EPasswordsDoNotMatch["de"] = "Passw\u00F6rter stimmen nicht \u00FCberein";
         EPasswordsDoNotMatch["pt"] = "As senhas n\u00E3o coincidem";
         EPasswordsDoNotMatch["cs"] = "Hesla se neshoduj\u00ED";
+        EPasswordsDoNotMatch["fi"] = "Salasanat eiv\u00E4t t\u00E4sm\u00E4\u00E4";
     })(EPasswordsDoNotMatch || (EPasswordsDoNotMatch = {}));
     try {
         // Validate the token

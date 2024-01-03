@@ -11,7 +11,8 @@ router.post('/api/login', users_1.loginUser);
 router.post('/api/users/forgot', users_1.forgotPassword);
 router.get('/api/users/reset/:token', users_1.resetPassword);
 router.post('/api/users/reset/:token', users_1.resetPasswordToken);
-router.get('/api/users', [users_1.authenticateUser, users_1.checkIfAdmin, users_1.getUsers]);
+//router.get('/api/users', [authenticateUser, checkIfAdmin, getUsers])
+router.get('/api/users', users_1.getUsers);
 router.get('/api/users/:id', users_1.getUser);
 //router.post('/api/users', addUser)
 router.put('/api/users/:id', [users_1.comparePassword, users_1.updateUser]);
@@ -45,7 +46,8 @@ router.get('/api/users/:id/safe/:safe/jokes', jokes_1.getJokesByUserAndSafe);
 //router.put('/api/users/request-new-token', refreshExpiredToken)
 router.get('/api/jokes/:jokeId/:language/:category/:type', jokes_1.findJokeByJokeIdLanguageCategoryType);
 router.post('/api/jokes', jokes_1.addJoke);
-router.put('/api/jokes/:id', jokes_1.updateJoke);
+router.put('/api/jokes/:jokeId/:language', jokes_1.updateJoke);
+router.get('/api/jokes/:id/verification', jokes_1.verifyJoke);
 router.get('/api/jokes', jokes_1.getJokes);
 router.get('/api/jokes/user/:id/', jokes_1.getJokesByUserId);
 router.delete('/api/jokes/:id/delete-user/:userId', jokes_1.deleteUserFromJoke);

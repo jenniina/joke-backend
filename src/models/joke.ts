@@ -17,10 +17,14 @@ const jokeSchema: Schema = new Schema(
       required: true,
       // enum: ['Any', 'Misc', 'Programming', 'Dark', 'Pun', 'Spooky', 'Christmas'],
     },
+    subCategories: {
+      type: [String],
+      required: false,
+    },
     language: {
       type: String,
       required: true,
-      enum: ['en', 'es', 'fr', 'de', 'pt', 'cs'],
+      //enum: ['en', 'es', 'fr', 'de', 'pt', 'cs', 'fi'],
     },
     safe: {
       type: Boolean,
@@ -41,6 +45,48 @@ const jokeSchema: Schema = new Schema(
     },
     joke: {
       type: String,
+    },
+    flags: {
+      nsfw: {
+        type: Boolean,
+        required: false,
+      },
+      religious: {
+        type: Boolean,
+        required: false,
+      },
+      political: {
+        type: Boolean,
+        required: false,
+      },
+      racist: {
+        type: Boolean,
+        required: false,
+      },
+      sexist: {
+        type: Boolean,
+        required: false,
+      },
+      explicit: {
+        type: Boolean,
+        required: false,
+      },
+    },
+    private: {
+      type: Boolean,
+      required: false,
+    },
+    verified: {
+      type: Boolean,
+      required: false,
+    },
+    anonymous: {
+      type: Boolean,
+      required: false,
+    },
+    author: {
+      type: String,
+      required: false,
     },
   },
   { timestamps: true }

@@ -22,6 +22,8 @@ export enum ECategory {
   pun = 'Pun',
   spooky = 'Spooky',
   christmas = 'Christmas',
+  chucknorris = 'ChuckNorris',
+  dadjokes = 'DadJokes',
 }
 export enum EJokeType {
   single = 'single',
@@ -34,15 +36,28 @@ export enum ELanguages {
   German = 'de',
   Portuguese = 'pt',
   Czech = 'cs',
+  Suomi = 'fi',
 }
 
 export interface IJokeCommonFields {
+  _id?: string
   jokeId: string
   type: EJokeType
   category: ECategory
-  language: ELanguages
+  subCategories: string[]
+  language: string
   safe: boolean
+  flags: {
+    nsfw?: boolean
+    religious?: boolean
+    political?: boolean
+    racist?: boolean
+  }
   user: IUser['_id'][]
+  private?: boolean
+  verified?: boolean
+  anonymous?: boolean
+  author?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -124,6 +139,7 @@ export enum ELanguage {
   de = 'de',
   pt = 'pt',
   cs = 'cs',
+  fi = 'fi',
 }
 export enum EError {
   en = 'An error occurred',
@@ -132,6 +148,7 @@ export enum EError {
   de = 'Ein Fehler ist aufgetreten',
   pt = 'Ocorreu um erro',
   cs = 'Došlo k chybě',
+  fi = 'Tapahtui virhe',
 }
 
 export enum EAnErrorOccurredAddingTheJoke {
@@ -141,4 +158,34 @@ export enum EAnErrorOccurredAddingTheJoke {
   de = 'Beim Hinzufügen des Witzes ist ein Fehler aufgetreten',
   pt = 'Ocorreu um erro ao adicionar a piada',
   cs = 'Při přidávání vtipu došlo k chybě',
+  fi = 'Vitsin lisäämisessä tapahtui virhe',
+}
+// Email sent to administrator, please wait for approval
+export enum EEmailSentToAdministratorPleaseWaitForApproval {
+  en = 'Email sent to administrator, please wait for approval',
+  es = 'Correo electrónico enviado al administrador, espere la aprobación',
+  fr = 'Email envoyé à l administrateur, veuillez attendre l approbation',
+  de = 'E-Mail an Administrator gesendet, bitte warten Sie auf Genehmigung',
+  pt = 'E-mail enviado ao administrador, aguarde a aprovação',
+  cs = 'E-mail odeslán správci, počkejte na schválení',
+  fi = 'Sähköposti lähetetty ylläpitäjälle, odota hyväksyntää',
+}
+export enum EJokeUpdated {
+  en = 'Joke updated',
+  es = 'Broma actualizada',
+  fr = 'Blague mise à jour',
+  de = 'Witz aktualisiert',
+  pt = 'Piada atualizada',
+  cs = 'Vtip aktualizován',
+  fi = 'Vitsi päivitetty',
+}
+// 'User deleted from joke'
+export enum EUserDeletedFromJoke {
+  en = 'User deleted from joke',
+  es = 'Usuario eliminado de la broma',
+  fr = 'Utilisateur supprimé de la blague',
+  de = 'Benutzer aus Witz gelöscht',
+  pt = 'Usuário excluído da piada',
+  cs = 'Uživatel smazán z vtipu',
+  fi = 'Käyttäjä poistettu vitsistä',
 }
