@@ -344,7 +344,7 @@ const updateJoke = async (req: Request, res: Response): Promise<void> => {
     const findJoke = await Joke.findOne({ jokeId, language })
     if (findJoke?.private === true && body.private === false) {
       // const subject = 'A joke needs verification'
-      // const message = `${body.bodyId}, ${body.type}, ${body.category}, ${
+      // const message = `${body.jokeId}, ${body.type}, ${body.category}, ${
       //   body.language
       // }, ${body.safe}, ${Object.entries(body.flags)
       //   .filter(([key, value]) => value)
@@ -361,7 +361,7 @@ const updateJoke = async (req: Request, res: Response): Promise<void> => {
       //     console.error(EErrorSendingMail[body.language as ELanguage], error)
       //   )
       const subject = 'A joke needs verification'
-      const message = `${body.bodyId}, ${body.type}, ${body.category}, ${
+      const message = `${body.jokeId}, ${body.type}, ${body.category}, ${
         body.language
       }, ${body.safe}, ${Object.entries(body.flags)
         .filter(([key, value]) => value)
@@ -372,7 +372,7 @@ const updateJoke = async (req: Request, res: Response): Promise<void> => {
         body.type === EJokeType.single && body.body ? body.body : ''
       }`
       const adminEmail = process.env.NODEMAILER_USER || ''
-      const link = `${process.env.BASE_URI}/api/bodys/${body.bodyId}/verification`
+      const link = `${process.env.BASE_URI}/api/jokes/${body.jokeId}/verification`
       const language = (body.language as ELanguage) ?? 'en'
 
       sendMail(subject, message, adminEmail, language, link)
@@ -395,19 +395,24 @@ const updateJoke = async (req: Request, res: Response): Promise<void> => {
           })
         })
       return
+    } else {
+      const updateJoke: IJoke | null = await Joke.findOneAndUpdate(
+        { jokeId, language },
+        body
+      )
+      joke = mapToJoke(updateJoke)
+
+      res
+        .status(200)
+        .json({ success: true, message: EJokeUpdated[language as ELanguage], joke })
     }
-
-    const updateJoke: IJoke | null = await Joke.findOneAndUpdate(
-      { jokeId, language },
-      body
-    )
-    joke = mapToJoke(updateJoke)
-
-    res.status(200).json({ message: EJokeUpdated[language as ELanguage], joke })
   } catch (error) {
     res
       .status(500)
-      .json({ message: EError[req.params.language as ELanguage] || 'An error occurred' })
+      .json({
+        success: false,
+        message: EError[req.params.language as ELanguage] || 'An error occurred',
+      })
     console.error('Error:', error)
   }
 }
