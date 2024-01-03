@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import { generateToken } from '../users'
+import { ELanguage, IUser } from '../../types'
 export type FormData = {
   firstName: string
   lastName: string
@@ -19,10 +20,66 @@ export type SelectData = {
   favoriteHero: string
   clarification: string
 }
+export enum EEmailSent {
+  en = 'Email sent',
+  es = 'Correo electrónico enviado',
+  fr = 'Email envoyé',
+  de = 'E-Mail gesendet',
+  pt = 'Email enviado',
+  cs = 'E-mail odeslán',
+  fi = 'Sähköposti lähetetty',
+}
+export enum EErrorSendingMail {
+  en = 'Error sending email',
+  es = 'Error al enviar el correo electrónico',
+  fr = "Erreur lors de l'envoi du courriel",
+  de = 'Fehler beim Senden der E-Mail',
+  pt = 'Erro ao enviar e-mail',
+  cs = 'Chyba při odesílání e-mailu',
+  fi = 'Virhe sähköpostin lähetyksessä',
+}
 
 const { validationResult } = require('express-validator')
 const sanitizeHtml = require('sanitize-html')
 const nodemailer = require('nodemailer')
+
+const transporter = nodemailer.createTransport({
+  host: process.env.NODEMAILER_HOST,
+  port: process.env.NODEMAILER_PORT,
+  auth: {
+    user: process.env.NODEMAILER_USER,
+    pass: process.env.NODEMAILER_PASSWORD,
+  },
+})
+export const sendMail = (
+  subject: string,
+  message: string,
+  username: IUser['username'],
+  language: ELanguage,
+  link: string
+) => {
+  return new Promise((resolve, reject) => {
+    transporter.sendMail(
+      {
+        from: process.env.NODEMAILER_USER,
+        to: username,
+        subject: subject,
+        text: message + ': ' + link || link,
+      },
+      (error: Error, info: { response: unknown }) => {
+        if (error) {
+          console.log(error)
+          reject(error)
+          return error
+        } else {
+          console.log('Email sent: ' + info.response)
+          resolve(info.response)
+          return info.response
+        }
+      }
+    )
+  })
+}
 
 export const sendEmailForm = async (req: Request, res: Response) => {
   const errors = validationResult(req)

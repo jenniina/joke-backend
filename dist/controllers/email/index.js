@@ -9,11 +9,61 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendVerificationLink = exports.sendEmailSelect = exports.sendEmailForm = void 0;
+exports.sendVerificationLink = exports.sendEmailSelect = exports.sendEmailForm = exports.sendMail = exports.EErrorSendingMail = exports.EEmailSent = void 0;
 const users_1 = require("../users");
+var EEmailSent;
+(function (EEmailSent) {
+    EEmailSent["en"] = "Email sent";
+    EEmailSent["es"] = "Correo electr\u00F3nico enviado";
+    EEmailSent["fr"] = "Email envoy\u00E9";
+    EEmailSent["de"] = "E-Mail gesendet";
+    EEmailSent["pt"] = "Email enviado";
+    EEmailSent["cs"] = "E-mail odesl\u00E1n";
+    EEmailSent["fi"] = "S\u00E4hk\u00F6posti l\u00E4hetetty";
+})(EEmailSent || (exports.EEmailSent = EEmailSent = {}));
+var EErrorSendingMail;
+(function (EErrorSendingMail) {
+    EErrorSendingMail["en"] = "Error sending email";
+    EErrorSendingMail["es"] = "Error al enviar el correo electr\u00F3nico";
+    EErrorSendingMail["fr"] = "Erreur lors de l'envoi du courriel";
+    EErrorSendingMail["de"] = "Fehler beim Senden der E-Mail";
+    EErrorSendingMail["pt"] = "Erro ao enviar e-mail";
+    EErrorSendingMail["cs"] = "Chyba p\u0159i odes\u00EDl\u00E1n\u00ED e-mailu";
+    EErrorSendingMail["fi"] = "Virhe s\u00E4hk\u00F6postin l\u00E4hetyksess\u00E4";
+})(EErrorSendingMail || (exports.EErrorSendingMail = EErrorSendingMail = {}));
 const { validationResult } = require('express-validator');
 const sanitizeHtml = require('sanitize-html');
 const nodemailer = require('nodemailer');
+const transporter = nodemailer.createTransport({
+    host: process.env.NODEMAILER_HOST,
+    port: process.env.NODEMAILER_PORT,
+    auth: {
+        user: process.env.NODEMAILER_USER,
+        pass: process.env.NODEMAILER_PASSWORD,
+    },
+});
+const sendMail = (subject, message, username, language, link) => {
+    return new Promise((resolve, reject) => {
+        transporter.sendMail({
+            from: process.env.NODEMAILER_USER,
+            to: username,
+            subject: subject,
+            text: message + ': ' + link || link,
+        }, (error, info) => {
+            if (error) {
+                console.log(error);
+                reject(error);
+                return error;
+            }
+            else {
+                console.log('Email sent: ' + info.response);
+                resolve(info.response);
+                return info.response;
+            }
+        });
+    });
+};
+exports.sendMail = sendMail;
 const sendEmailForm = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

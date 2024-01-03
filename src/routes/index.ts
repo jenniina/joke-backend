@@ -65,6 +65,7 @@ import {
   getJokesByUserId,
   // getJokesByUsername,
   deleteUserFromJoke,
+  verifyJoke,
 } from '../controllers/jokes'
 
 const router = Router()
@@ -74,7 +75,8 @@ router.post('/api/login', loginUser)
 router.post('/api/users/forgot', forgotPassword)
 router.get('/api/users/reset/:token', resetPassword)
 router.post('/api/users/reset/:token', resetPasswordToken)
-router.get('/api/users', [authenticateUser, checkIfAdmin, getUsers])
+//router.get('/api/users', [authenticateUser, checkIfAdmin, getUsers])
+router.get('/api/users', getUsers)
 router.get('/api/users/:id', getUser)
 //router.post('/api/users', addUser)
 router.put('/api/users/:id', [comparePassword, updateUser])
@@ -114,7 +116,8 @@ router.get(
   findJokeByJokeIdLanguageCategoryType
 )
 router.post('/api/jokes', addJoke)
-router.put('/api/jokes/:id', updateJoke)
+router.put('/api/jokes/:jokeId/:language', updateJoke)
+router.get('/api/jokes/:id/verification', verifyJoke)
 router.get('/api/jokes', getJokes)
 router.get('/api/jokes/user/:id/', getJokesByUserId)
 router.delete('/api/jokes/:id/delete-user/:userId', deleteUserFromJoke)
