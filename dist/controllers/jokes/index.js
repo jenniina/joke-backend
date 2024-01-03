@@ -292,7 +292,7 @@ const updateJoke = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const findJoke = yield joke_1.Joke.findOne({ jokeId, language });
         if ((findJoke === null || findJoke === void 0 ? void 0 : findJoke.private) === true && body.private === false) {
             // const subject = 'A joke needs verification'
-            // const message = `${body.bodyId}, ${body.type}, ${body.category}, ${
+            // const message = `${body.jokeId}, ${body.type}, ${body.category}, ${
             //   body.language
             // }, ${body.safe}, ${Object.entries(body.flags)
             //   .filter(([key, value]) => value)
@@ -308,12 +308,12 @@ const updateJoke = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             //     console.error(EErrorSendingMail[body.language as ELanguage], error)
             //   )
             const subject = 'A joke needs verification';
-            const message = `${body.bodyId}, ${body.type}, ${body.category}, ${body.language}, ${body.safe}, ${Object.entries(body.flags)
+            const message = `${body.jokeId}, ${body.type}, ${body.category}, ${body.language}, ${body.safe}, ${Object.entries(body.flags)
                 .filter(([key, value]) => value)
                 .map(([key, value]) => key)
                 .join(', ')}, ${body.user}, ${body.type === types_1.EJokeType.twopart && body.setup ? body.setup : ''}, ${body.type === types_1.EJokeType.twopart && body.delivery ? body.delivery : ''}, ${body.type === types_1.EJokeType.single && body.body ? body.body : ''}`;
             const adminEmail = process.env.NODEMAILER_USER || '';
-            const link = `${process.env.BASE_URI}/api/bodys/${body.bodyId}/verification`;
+            const link = `${process.env.BASE_URI}/api/jokes/${body.jokeId}/verification`;
             const language = (_l = body.language) !== null && _l !== void 0 ? _l : 'en';
             (0, email_1.sendMail)(subject, message, adminEmail, language, link)
                 .then((response) => {
@@ -333,14 +333,21 @@ const updateJoke = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             });
             return;
         }
-        const updateJoke = yield joke_1.Joke.findOneAndUpdate({ jokeId, language }, body);
-        joke = mapToJoke(updateJoke);
-        res.status(200).json({ message: types_1.EJokeUpdated[language], joke });
+        else {
+            const updateJoke = yield joke_1.Joke.findOneAndUpdate({ jokeId, language }, body);
+            joke = mapToJoke(updateJoke);
+            res
+                .status(200)
+                .json({ success: true, message: types_1.EJokeUpdated[language], joke });
+        }
     }
     catch (error) {
         res
             .status(500)
-            .json({ message: EError[req.params.language] || 'An error occurred' });
+            .json({
+            success: false,
+            message: EError[req.params.language] || 'An error occurred',
+        });
         console.error('Error:', error);
     }
 });
