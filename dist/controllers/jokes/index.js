@@ -249,7 +249,7 @@ const verifyJoke = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         EYourJokeHasBeenVerified["fi"] = "Vitsisi on vahvistettu";
     })(EYourJokeHasBeenVerified || (EYourJokeHasBeenVerified = {}));
     try {
-        const joke = yield joke_1.Joke.findOneAndUpdate({ _id: req.params.id }, { verified: true });
+        const joke = yield joke_1.Joke.findOneAndUpdate({ _id: req.params.id }, { verified: true, private: false });
         const subject = EYourJokeHasBeenVerified[joke === null || joke === void 0 ? void 0 : joke.language];
         const message = `${joke === null || joke === void 0 ? void 0 : joke.category}, ${(joke === null || joke === void 0 ? void 0 : joke.type) === types_1.EJokeType.twopart ? `${joke === null || joke === void 0 ? void 0 : joke.setup} ${joke === null || joke === void 0 ? void 0 : joke.delivery}` : ''} - ${(joke === null || joke === void 0 ? void 0 : joke.type) === types_1.EJokeType.single ? joke === null || joke === void 0 ? void 0 : joke.joke : ''}`;
         const author = (joke === null || joke === void 0 ? void 0 : joke.author) || '';

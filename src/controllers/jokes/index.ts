@@ -295,7 +295,7 @@ const verifyJoke = async (req: Request, res: Response): Promise<void> => {
   try {
     const joke: IJoke | null = await Joke.findOneAndUpdate(
       { _id: req.params.id },
-      { verified: true }
+      { verified: true, private: false }
     )
     const subject = EYourJokeHasBeenVerified[joke?.language as ELanguage]
     const message = `${joke?.category}, ${
