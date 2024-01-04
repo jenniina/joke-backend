@@ -298,9 +298,9 @@ const verifyJoke = async (req: Request, res: Response): Promise<void> => {
       { verified: true }
     )
     const subject = EYourJokeHasBeenVerified[joke?.language as ELanguage]
-    const message = `${joke?.category}, ${joke?.language}, ${
+    const message = `${joke?.category}, ${
       joke?.type === EJokeType.twopart ? `${joke?.setup} ${joke?.delivery}` : ''
-    } ${joke?.type === EJokeType.single ? joke?.joke : ''}`
+    } - ${joke?.type === EJokeType.single ? joke?.joke : ''}`
     const author = joke?.author || ''
     const recipient = await User.findOne({ _id: author })
     const username = recipient?.username || ''
@@ -407,12 +407,10 @@ const updateJoke = async (req: Request, res: Response): Promise<void> => {
         .json({ success: true, message: EJokeUpdated[language as ELanguage], joke })
     }
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: EError[req.params.language as ELanguage] || 'An error occurred',
-      })
+    res.status(500).json({
+      success: false,
+      message: EError[req.params.language as ELanguage] || 'An error occurred',
+    })
     console.error('Error:', error)
   }
 }

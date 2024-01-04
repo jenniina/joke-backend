@@ -251,7 +251,7 @@ const verifyJoke = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     try {
         const joke = yield joke_1.Joke.findOneAndUpdate({ _id: req.params.id }, { verified: true });
         const subject = EYourJokeHasBeenVerified[joke === null || joke === void 0 ? void 0 : joke.language];
-        const message = `${joke === null || joke === void 0 ? void 0 : joke.category}, ${joke === null || joke === void 0 ? void 0 : joke.language}, ${(joke === null || joke === void 0 ? void 0 : joke.type) === types_1.EJokeType.twopart ? `${joke === null || joke === void 0 ? void 0 : joke.setup} ${joke === null || joke === void 0 ? void 0 : joke.delivery}` : ''} ${(joke === null || joke === void 0 ? void 0 : joke.type) === types_1.EJokeType.single ? joke === null || joke === void 0 ? void 0 : joke.joke : ''}`;
+        const message = `${joke === null || joke === void 0 ? void 0 : joke.category}, ${(joke === null || joke === void 0 ? void 0 : joke.type) === types_1.EJokeType.twopart ? `${joke === null || joke === void 0 ? void 0 : joke.setup} ${joke === null || joke === void 0 ? void 0 : joke.delivery}` : ''} - ${(joke === null || joke === void 0 ? void 0 : joke.type) === types_1.EJokeType.single ? joke === null || joke === void 0 ? void 0 : joke.joke : ''}`;
         const author = (joke === null || joke === void 0 ? void 0 : joke.author) || '';
         const recipient = yield user_1.User.findOne({ _id: author });
         const username = (recipient === null || recipient === void 0 ? void 0 : recipient.username) || '';
@@ -342,9 +342,7 @@ const updateJoke = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         }
     }
     catch (error) {
-        res
-            .status(500)
-            .json({
+        res.status(500).json({
             success: false,
             message: EError[req.params.language] || 'An error occurred',
         });
